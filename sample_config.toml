@@ -1,0 +1,31 @@
+[output]
+file = "ledger_dat"
+date_format = "%Y-%m-%d"
+
+[[accounts]]
+identifier = "XXXXXXXXXXXXXXX1"
+ledger_source = "Assets:Chequing"
+
+date_column = 1
+date_format = "%m/%d/%Y"
+payee_column = [3, 4]
+debit_column = 5
+debit_format = "%f"
+credit_column = 5
+credit_format = "-%f"
+
+display_columns = [1, 5, 3, 4]
+
+[[accounts]]
+identifier = "XXXXXXXXXXXXXXX2"
+ledger_source = "Liabilities:Credit Card"
+
+date_column = 2
+date_format = "%Y%m%d"
+payee_column = 5
+debit_column = 4
+debit_format = "%f"
+credit_column = 4
+credit_format = "-%f"
+
+display_columns = [2, 4, 5]
