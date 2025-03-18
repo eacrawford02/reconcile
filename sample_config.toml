@@ -8,11 +8,11 @@ ledger_source = "Assets:Chequing"
 
 date_column = 2
 date_format = "%m/%d/%Y"
-payee_column = [4, 5]
 debit_column = 6
 debit_format = "%f"
 credit_column = 6
 credit_format = "-%f"
+payee_columns = [4, 5]
 
 display_columns = [2, 6, 4, 5]
 
@@ -22,10 +22,10 @@ ledger_source = "Liabilities:Credit Card"
 
 date_column = 2
 date_format = "%Y%m%d"
-payee_column = 5
 debit_column = 4
 debit_format = "%f"
 credit_column = 4
 credit_format = "-%f"
+payee_columns = [5]
 
 display_columns = [2, 4, 5]
