@@ -6,6 +6,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <sstream>
+#include <format>
 
 #include "statement_importer.hpp"
 
@@ -17,11 +18,19 @@ public:
   int length();
   int width();
   void duplicate();
+  float getAmount();
   void setAmount(float value);
   void setDestination(std::string value);
   ConstIterator cbegin();
   Iterator cursor;
 private:
+  std::vector<std::string> stringToRow(std::string line);
+  float parseAmount(std::string format, std::string cell);
+  void storeAmount(int column, std::string format, float value);
+  Descriptor descriptor;
+  std::vector<int> columnWidths;
+  std::vector<std::string> headers;
+  std::vector<std::vector<std::string>> data;
 };
 
 #endif
