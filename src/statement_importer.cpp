@@ -11,7 +11,7 @@ namespace {
     constexpr std::string debitFormat = "debit_format";
     constexpr std::string creditColumn = "credit_column";
     constexpr std::string creditFormat = "credit_format";
-    constexpr std::string payeeColumns = "payee_column";
+    constexpr std::string payeeColumns = "payee_columns";
     constexpr std::string displayColumns = "display_columns";
   }
 }
