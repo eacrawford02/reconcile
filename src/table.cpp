@@ -88,30 +88,23 @@ float Table::getAmount() {
   }
 }
 
-float Table::parseAmount(std::string format, std::string cell) {
-  int floatStart = format.find('{');
-  std::string prefix = format.substr(0, floatStart);
-  std::string suffix = format.substr(format.find('}') + 1);
-  bool prefixFound = cell.find(prefix) != std::string::npos;
-  bool suffixFound = cell.find(suffix) != std::string::npos;
-
-  if (prefixFound && suffixFound) {
-    int suffixSize = format.size() - format.find('}') - 1;
-    int cellSuffixStart = cell.size() - suffixSize;
-    float amount = std::stof(cell.substr(floatStart, cellSuffixStart));
-    return amount;
-  } else {
-    throw std::runtime_error("Error parsing \"" + cell + "\": invalid amount "
-	"format \"" + format + "\"");
-  }
-}
-
 void Table::setAmount(float value) {
   if (value >= 0) {
     storeAmount(descriptor.debitColumn, descriptor.debitFormat, value);
   } else {
     storeAmount(descriptor.creditColumn, descriptor.creditFormat, value);
   }
+}
+
+std::chrono::year_month_day Table::getDate() {
+  std::istringstream rawDate{(*cursor)[descriptor.dateColumn]};
+  const char* format = descriptor.dateFormat.c_str();
+  // FIXME: replace date library with std::chrono once Clang C++20 Calendar
+  // extenstion is complete
+  date::year_month_day date;
+  date::from_stream(rawDate, format, date);
+  // Convert date::year_month_day back to std::chrono::year_month_day
+  return std::chrono::year_month_day{std::chrono::sys_days{date}};
 }
 
 void Table::setDestination(std::string value) {
@@ -128,6 +121,24 @@ std::vector<std::string> Table::stringToRow(std::string line) {
     row.push_back(value);
   }
   return row;
+}
+
+float Table::parseAmount(std::string format, std::string cell) {
+  int floatStart = format.find('{');
+  std::string prefix = format.substr(0, floatStart);
+  std::string suffix = format.substr(format.find('}') + 1);
+  bool prefixFound = cell.find(prefix) != std::string::npos;
+  bool suffixFound = cell.find(suffix) != std::string::npos;
+
+  if (prefixFound && suffixFound) {
+    int suffixSize = format.size() - format.find('}') - 1;
+    int cellSuffixStart = cell.size() - suffixSize;
+    float amount = std::stof(cell.substr(floatStart, cellSuffixStart));
+    return amount;
+  } else {
+    throw std::runtime_error("Error parsing \"" + cell + "\": invalid amount "
+	"format \"" + format + "\"");
+  }
 }
 
 void Table::storeAmount(int column, std::string format, float value) {

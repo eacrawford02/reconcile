@@ -6,7 +6,10 @@
 #include <fstream>
 #include <stdexcept>
 #include <sstream>
+#include <chrono>
 #include <format>
+
+#include "date.h"
 
 #include "statement_importer.hpp"
 
@@ -20,6 +23,7 @@ public:
   void duplicate();
   float getAmount();
   void setAmount(float value);
+  std::chrono::year_month_day getDate();
   void setDestination(std::string value);
   ConstIterator cbegin();
   Iterator cursor;
