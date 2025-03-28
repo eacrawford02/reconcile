@@ -4,6 +4,7 @@
 
 #include "toml.hpp"
 #include "statement_importer.hpp"
+#include "table.hpp"
 
 int main(int argc, char* argv[]) {
   if (argc == 1) {
@@ -15,7 +16,9 @@ int main(int argc, char* argv[]) {
   StatementImporter importer{config};
 
   for (int i = 1; i < argc; i++) {
-    Descriptor d = importer.descriptor(std::string{argv[i]});
+    std::string statement{argv[i]};
+    Descriptor descriptor = importer.descriptor(statement);
+    Table table{statement, descriptor};
   }
 
   return 0;
