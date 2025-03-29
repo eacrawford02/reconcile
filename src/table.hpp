@@ -20,6 +20,9 @@ public:
   Table(std::string statement, Descriptor descriptor);
   int length();
   int width();
+  std::vector<int> displayWidths();
+  std::vector<std::string> displayHeaders();
+  std::vector<std::string> displayRow(int row);
   void duplicate();
   float getAmount();
   void setAmount(float value);
@@ -35,6 +38,15 @@ private:
   std::vector<int> columnWidths;
   std::vector<std::string> headers;
   std::vector<std::vector<std::string>> data;
+
+  template<typename T>
+  std::vector<T> displayColumns(std::vector<T> row) {
+    std::vector<T> displayedColumns;
+    for (int column : descriptor.displayColumns) {
+      displayedColumns.push_back(row[column]);
+    }
+    return displayedColumns;
+  }
 };
 
 #endif
