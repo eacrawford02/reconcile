@@ -52,6 +52,16 @@ int Table::length() { return data.size(); }
 
 int Table::width() { return headers.size(); }
 
+std::vector<int> Table::displayWidths() { return displayColumns(columnWidths); }
+
+std::vector<std::string> Table::displayHeaders() {
+  return displayColumns(headers);
+}
+
+std::vector<std::string> Table::displayRow(int row) {
+  return displayColumns(data[row]);
+}
+
 void Table::duplicate() {
   // Apparently (according to Clang) std::vector:iterator is implicitly
   // convertible to std::vector::const_iterator (can't find any docs confirming
