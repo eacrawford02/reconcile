@@ -2,6 +2,7 @@
 
 TableViewArray::TableViewArray(std::vector<Table>& tables, WINDOW* window) :
     tables{tables} {
+  // Allocate screen space for each TableView
   int height;
   int width;
   getmaxyx(window, height, width);
@@ -20,6 +21,11 @@ TableViewArray::TableViewArray(std::vector<Table>& tables, WINDOW* window) :
     contents.push_back(content);
     tableViews.push_back(tableView);
   }
+
+  // Focus on a table
+  nextFocus();
+  tableViews[focusedIndex].focus = true;
+  tableViews[focusedIndex].draw();
 }
 
 TableViewArray::~TableViewArray() {
@@ -42,4 +48,16 @@ void TableViewArray::scrollDown() {
 
   //windows[0].scrollDown();
   // TODO: focus new view
+}
+
+Table& TableViewArray::focusedTable() { return tables[focusedIndex]; }
+
+void TableViewArray::nextFocus() {
+  // Determine which row, accross all tables, has the closest transaction date
+  auto compare = [](Table const& a, Table const& b) {
+    return a.getDate() < b.getDate();
+  };
+  std::vector<Table>::iterator nextTable;
+  nextTable = std::min_element(tables.begin(), tables.end(), compare);
+  focusedIndex = std::distance(tables.begin(), nextTable);
 }

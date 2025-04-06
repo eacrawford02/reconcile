@@ -43,7 +43,18 @@ void TableView::scrollDown() {}
 void TableView::draw() {
   wmove(window, 2, 0); // Don't erase the first two lines (headers and divider)
   wclrtobot(window);
+  int cursorIndex = table.cursor - table.cbegin();
   for (int i = 0; i < view.size(); i++) {
+    if (i == cursorIndex) {
+      if (focus) {
+	wattr_on(window, COLOR_PAIR(1), NULL);
+      } else {
+	wattr_on(window, COLOR_PAIR(2), NULL);
+      }
+    } else {
+      wattr_off(window, COLOR_PAIR(1), NULL);
+      wattr_off(window, COLOR_PAIR(2), NULL);
+    }
     mvwprintw(window, i + 2, 0, "%s", view[i].c_str());
   }
   wrefresh(window);

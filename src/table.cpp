@@ -106,7 +106,7 @@ void Table::setAmount(float value) {
   }
 }
 
-std::chrono::year_month_day Table::getDate() {
+std::chrono::year_month_day Table::getDate() const {
   std::istringstream rawDate{(*cursor)[descriptor.dateColumn]};
   const char* format = descriptor.dateFormat.c_str();
   // FIXME: replace date library with std::chrono once Clang C++20 Calendar
