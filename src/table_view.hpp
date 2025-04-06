@@ -15,6 +15,7 @@ public:
   void scrollUp(); // Bound-checking
   void scrollDown(); // Bound-checking
   void draw();
+  bool focus = false;
 private:
   Table& table;
   WINDOW* window;

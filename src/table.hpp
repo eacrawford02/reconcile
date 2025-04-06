@@ -26,7 +26,7 @@ public:
   void duplicate();
   float getAmount();
   void setAmount(float value);
-  std::chrono::year_month_day getDate();
+  std::chrono::year_month_day getDate() const;
   void setDestination(std::string value);
   ConstIterator cbegin();
   Iterator cursor;
