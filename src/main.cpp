@@ -7,6 +7,7 @@
 #include "statement_importer.hpp"
 #include "table.hpp"
 #include "table_view_array.hpp"
+#include "prompt.hpp"
 
 int main(int argc, char* argv[]) {
   if (argc == 1) {
@@ -52,6 +53,7 @@ int main(int argc, char* argv[]) {
   wrefresh(promptBorder);
 
   TableViewArray tableViewArray{tables, tableContent};
+  Prompt prompt{promptContent};
 
   delwin(tableContent);
   delwin(promptBorder);
