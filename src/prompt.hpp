@@ -11,10 +11,11 @@ public:
   Prompt(WINDOW* window);
   void debitPrompt(std::vector<std::string> row);
   void creditPrompt(std::vector<std::string> row);
-  Prompt& operator<<(char c);
+  void printInput(std::string input, int cursorIndex);
   void clear();
 private:
   WINDOW* window;
+  int inputHead = 0;
   void draw(std::vector<std::string> row, std::string message);
 };
 
