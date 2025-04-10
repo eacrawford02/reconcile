@@ -8,6 +8,7 @@
 #include "table.hpp"
 #include "table_view_array.hpp"
 #include "prompt.hpp"
+#include "input.hpp"
 
 int main(int argc, char* argv[]) {
   if (argc == 1) {
@@ -54,6 +55,9 @@ int main(int argc, char* argv[]) {
 
   TableViewArray tableViewArray{tables, tableContent};
   Prompt prompt{promptContent};
+  Input input{tableViewArray, prompt};
+
+  input.process();
 
   delwin(tableContent);
   delwin(promptBorder);
