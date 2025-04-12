@@ -5,17 +5,21 @@
 #include <string>
 
 #include <ncurses.h>
+#include <form.h>
 
 class Prompt {
 public:
   Prompt(WINDOW* window);
+  ~Prompt();
   void debitPrompt(std::vector<std::string> row);
   void creditPrompt(std::vector<std::string> row);
-  void printInput(std::string input, int cursorIndex);
-  void clear();
+  std::string getInput();
 private:
   WINDOW* window;
-  int inputHead = 0;
+  WINDOW* fieldWindow;
+  FIELD* fields[2];
+  FORM* form;
+  int fieldPosition = 0;
   void draw(std::vector<std::string> row, std::string message);
 };
 
