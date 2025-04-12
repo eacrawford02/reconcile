@@ -52,6 +52,7 @@ int main(int argc, char* argv[]) {
 
   box(promptBorder, 0, 0);
   wrefresh(promptBorder);
+  keypad(promptContent, TRUE);
 
   TableViewArray tableViewArray{tables, tableContent};
   Prompt prompt{promptContent};
