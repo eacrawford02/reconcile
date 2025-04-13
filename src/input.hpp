@@ -10,18 +10,12 @@
 
 class Input {
 public:
-  Input(TableViewArray& tableViewArray, Prompt prompt);
-  void process();
+  Input(TableViewArray& tableViewArray, Prompt& prompt);
+  void evaluate();
 private:
-  enum State {INSERT, BACKSPACE, QUIT};
   TableViewArray& tableViewArray;
-  Prompt prompt;
-  State state = INSERT;
+  Prompt& prompt;
   bool quit = false;
-  std::string buffer = " ";
-  std::string::const_iterator cursor;
-  void evaluateInput(std::string s);
-  State nextState(wchar_t input);
 };
 
 #endif

@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
   Prompt prompt{promptContent};
   Input input{tableViewArray, prompt};
 
-  input.process();
+  input.evaluate();
 
   delwin(tableContent);
   delwin(promptBorder);
