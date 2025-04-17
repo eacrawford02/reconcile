@@ -18,9 +18,9 @@ void Input::evaluate() {
     if (input == "q") {
       quit = true;
     } else if (input == "s") {
-      // TODO: scroll down
+      tableViewArray.scrollDown();
     } else if (input == "b") {
-      // TODO: scroll up
+      tableViewArray.scrollUp();
     } else {
     }
   }

@@ -13,14 +13,20 @@ class TableViewArray {
 public:
   TableViewArray(std::vector<Table>& tables, WINDOW* window);
   ~TableViewArray();
+  void scrollUp(); // Bound-checking
+  void scrollDown(); // Bound-checking
   Table& focusedTable();
 private:
   std::vector<WINDOW*> borders;
   std::vector<WINDOW*> contents;
   std::vector<Table>& tables;
   std::vector<TableView> tableViews;
+  std::vector<int> indices;
+  // Use an index instead of an iterator so that both tables and tableViews can
+  // share the same variable
   int focusedIndex;
-  void nextFocus();
+  int forwardFocus();
+  int reverseFocus();
 };
 
 #endif
