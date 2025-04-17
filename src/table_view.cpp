@@ -36,14 +36,55 @@ TableView::TableView(Table& table, WINDOW* window) : table{table},
   }
 }
 
-void TableView::scrollUp() {}
+void TableView::scrollUp() {
+  if (table.cursor == table.cbegin()) {
+    throw std::out_of_range("Attempting to scroll past beginning of table");
+  }
+  table.cursor--;
 
-void TableView::scrollDown() {}
+  int cursorIndex = (table.cursor - table.cbegin()) - head;
+  int midpoint = view.size() / 2 + 1;
+
+  // Don't scroll down if the top of the table is already in view or if the
+  // cursor hasn't yet reached the midpoint of the view
+  if (head > 0 && cursorIndex <= midpoint) {
+    tail--;
+    view.pop_back();
+    head--;
+    view.push_front(format(table.displayRow(head)));
+  }
+}
+
+void TableView::scrollDown() {
+  if (table.cursor == (table.cend() - 1)) {
+    // Trailing scroll so that TableViewArray doesn't get "stuck" on a table
+    // that has been scrolled to its bottom (if the cursor still points to the
+    // last row when at the bottom of the table, the comparisons between tables
+    // in TableViewArray, which uses the date of the row being pointed to, will
+    // always select the table that has been scrolled to its bottom since it
+    // technically has the earliest date)
+    table.cursor++;
+    throw std::out_of_range("Attempting to scroll past end of table");
+  }
+  table.cursor++;
+
+  int cursorIndex = (table.cursor - table.cbegin()) - head;
+  int midpoint = view.size() / 2 + 1;
+
+  // Don't scroll down if the bottom of the table is already in view or if the
+  // cursor hasn't yet reached the midpoint of the view
+  if (tail < table.length() && cursorIndex >= midpoint) {
+    head++;
+    view.pop_front();
+    tail++;
+    view.push_back(format(table.displayRow(tail)));
+  }
+}
 
 void TableView::draw() {
   wmove(window, 2, 0); // Don't erase the first two lines (headers and divider)
   wclrtobot(window);
-  int cursorIndex = table.cursor - table.cbegin();
+  int cursorIndex = (table.cursor - table.cbegin()) - head;
   for (int i = 0; i < view.size(); i++) {
     if (i == cursorIndex) {
       if (focus) {

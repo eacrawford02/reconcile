@@ -4,6 +4,7 @@
 #include <deque>
 #include <string>
 #include <vector>
+#include <stdexcept>
 
 #include "ncurses.h"
 

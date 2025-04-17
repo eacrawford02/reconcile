@@ -107,7 +107,25 @@ void Table::setAmount(float value) {
 }
 
 std::chrono::year_month_day Table::getDate() const {
-  std::istringstream rawDate{(*cursor)[descriptor.dateColumn]};
+  return parseDate((*cursor)[descriptor.dateColumn]);
+}
+
+std::chrono::year_month_day Table::getNextDate() const {
+  if (cursor == data.cend()) {
+    throw std::out_of_range("Attempting to access out of range element");
+  }
+  return parseDate((*(cursor + 1))[descriptor.dateColumn]);
+}
+
+std::chrono::year_month_day Table::getPrevDate() const {
+  if (cursor == data.cbegin()) {
+    throw std::out_of_range("Attempting to access out of range element");
+  }
+  return parseDate((*(cursor - 1))[descriptor.dateColumn]);
+}
+
+std::chrono::year_month_day Table::parseDate(std::string dateString) const {
+  std::istringstream rawDate{dateString};
   const char* format = descriptor.dateFormat.c_str();
   // FIXME: replace date library with std::chrono once Clang C++20 Calendar
   // extenstion is complete
@@ -121,7 +139,9 @@ void Table::setDestination(std::string value) {
   (*cursor)[headers.size() - 1] = value;
 }
 
-Table::ConstIterator Table::cbegin() { return data.cbegin(); }
+Table::ConstIterator Table::cbegin() const { return data.cbegin(); }
+
+Table::ConstIterator Table::cend() const { return data.cend(); }
 
 std::vector<std::string> Table::stringToRow(std::string line) {
   std::stringstream stream{line};

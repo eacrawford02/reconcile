@@ -27,13 +27,17 @@ public:
   float getAmount();
   void setAmount(float value);
   std::chrono::year_month_day getDate() const;
+  std::chrono::year_month_day getNextDate() const;
+  std::chrono::year_month_day getPrevDate() const;
   void setDestination(std::string value);
-  ConstIterator cbegin();
+  ConstIterator cbegin() const;
+  ConstIterator cend() const;
   Iterator cursor;
 private:
   std::vector<std::string> stringToRow(std::string line);
   float parseAmount(std::string format, std::string cell);
   void storeAmount(int column, std::string format, float value);
+  std::chrono::year_month_day parseDate(std::string dateString) const;
   Descriptor descriptor;
   std::vector<int> columnWidths;
   std::vector<std::string> headers;
