@@ -80,11 +80,8 @@ void TableViewArray::scrollDown() {
   tableViews[focusedIndex].draw(); // Remember to redraw after unfocusing
 
   int prevFocusedIndex = focusedIndex;
-  // TODO: replace look forward with getNextDate usage in forwardFocus
   // Look forward in currently focused table
-  tables[focusedIndex].cursor++;
   focusedIndex = forwardFocus();
-  tables[prevFocusedIndex].cursor--;
 
   try {
     // If we are scrolling accross tables (as opposed to scrolling down in the
@@ -123,18 +120,22 @@ Table& TableViewArray::focusedTable() { return tables[focusedIndex]; }
 
 int TableViewArray::forwardFocus() {
   // Determine which row, accross all tables, has the closest transaction date
-  auto compare = [](Table const& a, Table const& b) {
-    if (a.cursor == a.cend()) {
+  auto compare = [this](int a, int b) {
+    Table const& tableA = tables[a];
+    Table const& tableB = tables[b];
+    if (tableA.cursor >= (tableA.cend() - 1)) {
       return false;
-    } else if (b.cursor == b.cend()) {
+    } else if (tableB.cursor >= (tableB.cend() - 1)) {
       return true;
     } else {
-      return a.getDate() < b.getDate();
+      auto dateA = focusedIndex == a ? tableA.getNextDate() : tableA.getDate();
+      auto dateB = focusedIndex == b ? tableB.getNextDate() : tableB.getDate();
+      return dateA < dateB;
     }
   };
-  std::vector<Table>::iterator nextTable;
-  nextTable = std::min_element(tables.begin(), tables.end(), compare);
-  return std::distance(tables.begin(), nextTable);
+  std::vector<int>::iterator nextTable;
+  nextTable = std::min_element(indices.begin(), indices.end(), compare);
+  return std::distance(indices.begin(), nextTable);
 }
 
 int TableViewArray::reverseFocus() {
@@ -153,17 +154,26 @@ int TableViewArray::reverseFocus() {
       // attempting to access the date of a scrolled-through table using
       // Table::getDate() will be an out-of-bounds access. We instead need to
       // reference that table's previous row's date
-      // TODO: clean up
-      //auto dateA = a.cursor == a.cend() ? a.getPrevDate() : a.getDate();
-      //auto dateB = b.cursor == b.cend() ? b.getPrevDate() : b.getDate();
-      bool dateALookBehind = (focusedIndex == a && tableA.cursor != tableA.cbegin()) || tableA.cursor == tableA.cend();
-      auto dateA = dateALookBehind ? tableA.getPrevDate() : tableA.getDate();
-      bool dateBLookBehind = (focusedIndex == b && tableB.cursor != tableB.cbegin()) || tableB.cursor == tableB.cend();
-      auto dateB = dateBLookBehind ? tableB.getPrevDate() : tableB.getDate();
-      return dateA < dateB;
+      return reverseDate(a) < reverseDate(b);
     }
   };
   std::vector<int>::iterator nextTable;
   nextTable = std::max_element(indices.begin(), indices.end(), compare);
   return std::distance(indices.begin(), nextTable);
 }
+
+std::chrono::year_month_day TableViewArray::reverseDate(int tableIndex) const {
+  Table const& table = tables[tableIndex];
+  if (focusedIndex == tableIndex && table.cursor != table.cbegin()) {
+    // If the table is currently focused AND the cursor is not at the
+    // front, return the previous date
+    return table.getPrevDate();
+  } else if (table.cursor == table.cend()) {
+    // Otherwise, if the cursor is at the back (out-of-range), return the
+    // previous date
+    return table.getPrevDate();
+  } else {
+    // Otherwise, return the date currently pointed to by the cursor
+    return table.getDate();
+  }
+};
