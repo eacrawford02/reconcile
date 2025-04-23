@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <chrono>
 
 #include <ncurses.h>
 
@@ -27,6 +28,7 @@ private:
   int focusedIndex;
   int forwardFocus();
   int reverseFocus();
+  std::chrono::year_month_day reverseDate(int tableIndex) const;
 };
 
 #endif
