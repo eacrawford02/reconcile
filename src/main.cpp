@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include <ncurses.h>
@@ -17,13 +18,14 @@ int main(int argc, char* argv[]) {
   }
 
   toml::table const config = toml::parse_file("sample_config.toml");
+  std::string dateFormat = config["output"]["date_format"].value_or("");
   StatementImporter importer{config};
 
   std::vector<Table> tables;
   for (int i = 1; i < argc; i++) {
     std::string statement{argv[i]};
     Descriptor descriptor = importer.descriptor(statement);
-    tables.push_back(Table{statement, descriptor});
+    tables.push_back(Table{statement, dateFormat, descriptor});
   }
 
   // Configure ncurses

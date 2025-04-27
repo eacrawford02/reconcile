@@ -1,7 +1,7 @@
 #include "table.hpp"
 
-Table::Table(std::string statement, Descriptor descriptor) :
-    descriptor(descriptor) {
+Table::Table(std::string statement, std::string globalDateFormat, Descriptor
+    descriptor) : globalDateFormat{globalDateFormat}, descriptor(descriptor) {
   std::ifstream inputStream{statement};
   if (!inputStream.is_open()) {
     throw std::runtime_error("Error: Could not open file " + statement);
@@ -33,6 +33,15 @@ Table::Table(std::string statement, Descriptor descriptor) :
   // Process remainder of file
   while (std::getline(inputStream, line)) {
     std::vector<std::string> row = stringToRow(line);
+
+    // Convert the date to the global date format
+    std::string& dateCell = row[descriptor.dateColumn];
+    std::string statementDateFormat = descriptor.dateFormat;
+    std::chrono::year_month_day date = parseDate(dateCell, statementDateFormat);
+    std::string convertedDate = std::vformat("{:" + globalDateFormat + "}",
+	std::make_format_args(date));
+    dateCell = convertedDate;
+
     row.push_back(""); // Empty string for category column
     data.push_back(row);
     
@@ -107,30 +116,30 @@ void Table::setAmount(float value) {
 }
 
 std::chrono::year_month_day Table::getDate() const {
-  return parseDate((*cursor)[descriptor.dateColumn]);
+  return parseDate((*cursor)[descriptor.dateColumn], globalDateFormat);
 }
 
 std::chrono::year_month_day Table::getNextDate() const {
   if (cursor == data.cend()) {
     throw std::out_of_range("Attempting to access out of range element");
   }
-  return parseDate((*(cursor + 1))[descriptor.dateColumn]);
+  return parseDate((*(cursor + 1))[descriptor.dateColumn], globalDateFormat);
 }
 
 std::chrono::year_month_day Table::getPrevDate() const {
   if (cursor == data.cbegin()) {
     throw std::out_of_range("Attempting to access out of range element");
   }
-  return parseDate((*(cursor - 1))[descriptor.dateColumn]);
+  return parseDate((*(cursor - 1))[descriptor.dateColumn], globalDateFormat);
 }
 
-std::chrono::year_month_day Table::parseDate(std::string dateString) const {
-  std::istringstream rawDate{dateString};
-  const char* format = descriptor.dateFormat.c_str();
+std::chrono::year_month_day Table::parseDate(std::string dateString, std::string
+    dateFormat) const {
+  std::istringstream dateStream{dateString};
   // FIXME: replace date library with std::chrono once Clang C++20 Calendar
   // extenstion is complete
   date::year_month_day date;
-  date::from_stream(rawDate, format, date);
+  date::from_stream(dateStream, dateFormat.c_str(), date);
   // Convert date::year_month_day back to std::chrono::year_month_day
   return std::chrono::year_month_day{std::chrono::sys_days{date}};
 }
