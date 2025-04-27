@@ -17,7 +17,8 @@ class Table {
 public:
   typedef std::vector<std::vector<std::string>>::iterator Iterator;
   typedef std::vector<std::vector<std::string>>::const_iterator ConstIterator;
-  Table(std::string statement, Descriptor descriptor);
+  Table(std::string statement, std::string globalDateFormat, Descriptor
+      descriptor);
   int length();
   int width();
   std::vector<int> displayWidths();
@@ -37,7 +38,9 @@ private:
   std::vector<std::string> stringToRow(std::string line);
   float parseAmount(std::string format, std::string cell);
   void storeAmount(int column, std::string format, float value);
-  std::chrono::year_month_day parseDate(std::string dateString) const;
+  std::chrono::year_month_day parseDate(std::string dateString, std::string
+      dateFormat) const;
+  std::string globalDateFormat;
   Descriptor descriptor;
   std::vector<int> columnWidths;
   std::vector<std::string> headers;
