@@ -9,11 +9,13 @@
 
 class Prompt {
 public:
+  enum Type {TAB, ENTER};
   Prompt(WINDOW* window);
   ~Prompt();
   void debitPrompt(std::vector<std::string> row);
   void creditPrompt(std::vector<std::string> row);
-  std::string getInput();
+  Type response(std::string& value);
+  void writeField(std::string contents);
 private:
   WINDOW* window;
   WINDOW* fieldWindow;

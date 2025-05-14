@@ -31,9 +31,10 @@ void Prompt::creditPrompt(std::vector<std::string> row) {
   draw(row, "To which account is this amount going?");
 }
 
-std::string Prompt::getInput() {
+Prompt::Type Prompt::response(std::string& value) {
   bool read = true;
   wchar_t inputChar;
+  Type responseType;
 
   while (read) {
     inputChar = wgetch(window);
@@ -43,6 +44,13 @@ std::string Prompt::getInput() {
       case '\n':
       case '\r':
 	read = false;
+	responseType = ENTER;
+	form_driver(form, REQ_VALIDATION);
+	break;
+      case KEY_STAB:
+      case '\t':
+	read = false;
+	responseType = TAB;
 	form_driver(form, REQ_VALIDATION);
 	break;
       case KEY_BACKSPACE:
@@ -73,10 +81,18 @@ std::string Prompt::getInput() {
 
   // Retrieve user input from field buffer and trim off any trailing spaces
   char* input = field_buffer(fields[0], 0);
+  //set_field_buffer(fields[0], 0, "");
+  form_driver(form, REQ_CLR_FIELD);
   int trim = strlen(input) - 1;
   char test = input[trim];
   while (input[trim] == ' ' && trim > 0) trim--;
-  return std::string{input, static_cast<std::string::size_type>(trim + 1)};
+  value = std::string{input, static_cast<std::string::size_type>(trim + 1)};
+  return responseType;
+}
+
+void Prompt::writeField(std::string contents) {
+  set_field_buffer(fields[0], 0, contents.c_str());
+  form_driver(form, REQ_END_FIELD);
 }
 
 void Prompt::draw(std::vector<std::string> row, std::string message) {
