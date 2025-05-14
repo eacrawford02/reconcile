@@ -10,12 +10,15 @@
 #include "table_view_array.hpp"
 #include "prompt.hpp"
 #include "input.hpp"
+#include "autocomplete.hpp"
 
 int main(int argc, char* argv[]) {
   if (argc == 1) {
     std::cout << "Usage: reconcile csv_file1 [csv_file2 ...]\n";
     exit(0);
   }
+
+  Autocomplete autocomplete{"sample_accounts.dat"};
 
   toml::table const config = toml::parse_file("sample_config.toml");
   std::string dateFormat = config["output"]["date_format"].value_or("");
@@ -58,7 +61,7 @@ int main(int argc, char* argv[]) {
 
   TableViewArray tableViewArray{tables, tableContent};
   Prompt prompt{promptContent};
-  Input input{tableViewArray, prompt};
+  Input input{tableViewArray, prompt, autocomplete};
 
   input.evaluate();
 

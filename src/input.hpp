@@ -7,15 +7,20 @@
 
 #include "table_view_array.hpp"
 #include "prompt.hpp"
+#include "autocomplete.hpp"
 
 class Input {
 public:
-  Input(TableViewArray& tableViewArray, Prompt& prompt);
+  Input(TableViewArray& tableViewArray, Prompt& prompt, Autocomplete&
+      autocomplete);
   void evaluate();
 private:
+  enum State {RECORD, AUTOCOMPLETE, SKIP, BACK, SPLIT, QUIT};
   TableViewArray& tableViewArray;
   Prompt& prompt;
-  bool quit = false;
+  Autocomplete& autocomplete;
+  State state = RECORD;
+  State nextState(Prompt::Type responseType, std::string input);
 };
 
 #endif
