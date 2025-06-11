@@ -9,11 +9,11 @@ SRCDIR = src
 # DO NOT SET TO obj. This directory name has a special meaning in FreeBSD make
 OBJDIR = build
 DEPDIR = .deps
-BIN = debug
+BIN = debug.out
 
-DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP)
 CXXFLAGS = -std=c++20 -g -O0
-LDLIBS = -lncurses
+LDLIBS = -lform -lncurses
 
 # Create list of object file targets
 OBJ != find $(SRCDIR) -name "*.cpp" \
