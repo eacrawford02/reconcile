@@ -17,6 +17,7 @@ public:
   void scrollUp(); // Bound-checking
   void scrollDown(); // Bound-checking
   Table& focusedTable();
+  void redrawFocusedView();
 private:
   std::vector<WINDOW*> borders;
   std::vector<WINDOW*> contents;

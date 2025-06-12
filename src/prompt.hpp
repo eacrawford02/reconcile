@@ -12,8 +12,8 @@ public:
   enum Type {TAB, ENTER};
   Prompt(WINDOW* window);
   ~Prompt();
-  void debitPrompt(std::vector<std::string> row);
-  void creditPrompt(std::vector<std::string> row);
+  void amountPrompt(float amount, std::vector<std::string> row);
+  void splitPrompt(std::vector<std::string> row);
   Type response(std::string& value);
   void writeField(std::string contents);
 private:
@@ -22,8 +22,10 @@ private:
   FIELD* fields[2];
   FORM* form;
   int fieldPosition = 0;
-  void draw(std::vector<std::string> row, std::string message);
+  void debitPrompt(std::vector<std::string> row);
+  void creditPrompt(std::vector<std::string> row);
+  void draw(std::vector<std::string> row, std::string message, bool
+      numericInput);
 };
 
 #endif
-

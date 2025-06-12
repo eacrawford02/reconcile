@@ -4,18 +4,21 @@ Input::Input(TableViewArray& tableViewArray, Prompt& prompt, Autocomplete&
     autocomplete) : tableViewArray{tableViewArray}, prompt{prompt},
     autocomplete{autocomplete} {
   // Set up initial prompt
-  Table& table = tableViewArray.focusedTable();
-  if (table.getAmount() >= 0) {
-    prompt.debitPrompt(table.displayRow(table.cursor - table.cbegin()));
-  } else {
-    prompt.creditPrompt(table.displayRow(table.cursor - table.cbegin()));
-  }
+  promptAfterScroll();
 }
 
 void Input::evaluate() {
   while (state != QUIT) {
+    // Get input
+    Prompt::Type responseType;
     std::string input;
-    Prompt::Type responseType = prompt.response(input);
+    try {
+      responseType = prompt.response(input);
+    } catch (const std::runtime_error& e) {
+      continue; // Let the user re-attempt to enter valid input
+    }
+
+    Table* table = &tableViewArray.focusedTable();
 
     state = nextState(responseType, input);
     switch (state) {
@@ -26,11 +29,17 @@ void Input::evaluate() {
 	break;
       case SKIP:
 	tableViewArray.scrollDown();
+	promptAfterScroll();
 	break;
       case BACK:
 	tableViewArray.scrollUp();
+	promptAfterScroll();
 	break;
       case SPLIT:
+	prompt.splitPrompt(table->displayRow(table->cursor - table->cbegin()));
+	break;
+      case RECORD_SPLIT:
+	recordSplit(input);
 	break;
     }
   }
@@ -39,23 +48,15 @@ void Input::evaluate() {
 Input::State Input::nextState(Prompt::Type responseType, std::string input) {
   State next;
 
-  if (responseType == Prompt::ENTER) {
-    if (input == "q") {
-      next = QUIT;
-    } else if (input == "s") {
-      next = SKIP;
-    } else if (input == "b") {
-      next = BACK;
-    } else {
-      next = RECORD;
-    }
-  } else {
-    next = AUTOCOMPLETE;
-  }
-
-  /*
   switch (state) {
-    case RECORD:
+    case SPLIT:
+      if (responseType == Prompt::ENTER) {
+	next = RECORD_SPLIT;
+      } else {
+	next = SPLIT;
+      }
+      break;
+    default:
       if (responseType == Prompt::ENTER) {
 	if (input == "q") {
 	  next = QUIT;
@@ -63,6 +64,8 @@ Input::State Input::nextState(Prompt::Type responseType, std::string input) {
 	  next = SKIP;
 	} else if (input == "b") {
 	  next = BACK;
+	} else if (input == "t") {
+	  next = SPLIT;
 	} else {
 	  next = RECORD;
 	}
@@ -70,16 +73,28 @@ Input::State Input::nextState(Prompt::Type responseType, std::string input) {
 	next = AUTOCOMPLETE;
       }
       break;
-    case AUTOCOMPLETE:
-      break;
-    case SKIP:
-      break;
-    case BACK:
-      break;
-    case SPLIT:
-      break;
   }
-  */
 
   return next;
+}
+
+void Input::promptAfterScroll() {
+  // Recall that a scroll action may change which table is currently focused.
+  // Thus, we must re-query the TableViewArray for the currently focused table
+  Table& table = tableViewArray.focusedTable();
+  auto row = table.displayRow(table.cursor - table.cbegin());
+  prompt.amountPrompt(table.getAmount(), row);
+}
+
+void Input::recordSplit(std::string input) {
+  float residual = std::stof(input);
+  Table& table = tableViewArray.focusedTable();
+  table.duplicate();
+  table.setAmount(residual);
+  table.cursor++;
+  table.setAmount(table.getAmount() - residual);
+  table.cursor--;
+  tableViewArray.redrawFocusedView();
+  auto row = table.displayRow(table.cursor - table.cbegin());
+  prompt.amountPrompt(table.getAmount(), row);
 }

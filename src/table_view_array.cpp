@@ -118,6 +118,11 @@ void TableViewArray::scrollDown() {
 
 Table& TableViewArray::focusedTable() { return tables[focusedIndex]; }
 
+void TableViewArray::redrawFocusedView() { 
+  tableViews[focusedIndex].refresh();
+  tableViews[focusedIndex].draw();
+}
+
 int TableViewArray::forwardFocus() {
   // Determine which row, accross all tables, has the closest transaction date
   auto compare = [this](int a, int b) {

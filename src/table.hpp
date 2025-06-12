@@ -31,8 +31,8 @@ public:
   std::chrono::year_month_day getNextDate() const;
   std::chrono::year_month_day getPrevDate() const;
   void setDestination(std::string value);
-  ConstIterator cbegin() const;
-  ConstIterator cend() const;
+  ConstIterator cbegin() const; // Don't hold reference, may be invalidated
+  ConstIterator cend() const; // Don't hold reference, may be invalidated
   Iterator cursor;
 private:
   std::vector<std::string> stringToRow(std::string line);
