@@ -16,11 +16,14 @@ public:
   void scrollUp(); // Bound-checking
   void scrollDown(); // Bound-checking
   void draw();
+  void refresh();
   bool focus = false;
 private:
   Table& table;
   WINDOW* window;
   std::vector<int> columnWidths;
+  int height;
+  int width;
   std::deque<std::string> view;
   int head = 0;
   int tail = 0;

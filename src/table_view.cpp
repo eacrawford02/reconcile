@@ -9,12 +9,10 @@ TableView::TableView(Table& table, WINDOW* window) : table{table},
     window{window} {
   columnWidths = table.displayWidths();
 
-  int height;
-  int width;
   getmaxyx(window, height, width);
-
   // Reserve first two lines for column headers and header divider
   height -= 2;
+
   std::vector<std::string> headers = table.displayHeaders();
   // Format header row by adding padding and column dividers
   std::string formattedHeaders;
@@ -30,10 +28,7 @@ TableView::TableView(Table& table, WINDOW* window) : table{table},
   // Print header divider
   mvwprintw(window, 1, 0, "%s", std::string{}.append(width, '-').c_str());
 
-  int viewSize = height > table.length() ? table.length() : height;
-  for (tail; tail < viewSize; tail++) {
-    view.push_back(format(table.displayRow(tail)));
-  }
+  refresh();
 }
 
 void TableView::scrollUp() {
@@ -99,6 +94,14 @@ void TableView::draw() {
     mvwprintw(window, i + 2, 0, "%s", view[i].c_str());
   }
   wrefresh(window);
+}
+void TableView::refresh() {
+  // Refresh view contents with rows from table
+  view.clear();
+  int viewSize = height > table.length() ? table.length() : height;
+  for (tail = head; tail < viewSize; tail++) {
+    view.push_back(format(table.displayRow(tail)));
+  }
 }
 
 std::string TableView::format(std::vector<std::string> row) {

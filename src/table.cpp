@@ -72,10 +72,19 @@ std::vector<std::string> Table::displayRow(int row) {
 }
 
 void Table::duplicate() {
+  // Note that if the vector is at capacity (the number of elements stored in
+  // the vector is equal to the number of elements the vector has space
+  // allocated for) then an insert will cause an internal reallocation and copy
+  // to occur, which will invalidate all element iterators and references. We
+  // thus need to stash the iterator index and get a new iterator lease to avoid
+  // illegal memory acesses during future operations on the vector
+  int index = cursor - data.cbegin();
   // Apparently (according to Clang) std::vector:iterator is implicitly
   // convertible to std::vector::const_iterator (can't find any docs confirming
   // this, though)
   data.insert(cursor, *cursor);
+  // Get new iterator handle
+  cursor = data.begin() + index;
 }
 
 float Table::getAmount() {

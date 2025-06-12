@@ -15,12 +15,15 @@ public:
       autocomplete);
   void evaluate();
 private:
-  enum State {RECORD, AUTOCOMPLETE, SKIP, BACK, SPLIT, QUIT};
+  enum State {RECORD, AUTOCOMPLETE, SKIP, BACK, SPLIT, RECORD_SPLIT, QUIT};
   TableViewArray& tableViewArray;
   Prompt& prompt;
   Autocomplete& autocomplete;
   State state = RECORD;
+  Table* focusedTable();
   State nextState(Prompt::Type responseType, std::string input);
+  void promptAfterScroll();
+  void recordSplit(std::string input);
 };
 
 #endif
