@@ -87,7 +87,15 @@ void Input::promptAfterScroll() {
 }
 
 void Input::recordSplit(std::string input) {
-  float residual = std::stof(input);
+  float residual;// = std::stof(input);
+  // FIXME: uncomment above line, remove try-catch once ncurses validation bug
+  // is fixed
+  try {
+    residual = std::stof(input);
+  } catch (const std::exception& e) {
+    state = SPLIT; // Let the user re-attempt to enter valid input
+    return;
+  }
   Table& table = tableViewArray.focusedTable();
   table.duplicate();
   table.setAmount(residual);

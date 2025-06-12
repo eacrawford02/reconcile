@@ -86,9 +86,12 @@ Prompt::Type Prompt::response(std::string& value) {
     }
   }
 
+  /*
+   * FIXME: revisit once ncurses bug is patched
   if (form_driver(form, REQ_VALIDATION) != E_OK) {
     throw std::runtime_error("Error: Invalid prompt input");
   }
+  */
 
   // Retrieve user input from field buffer and trim off any trailing spaces
   char* input = field_buffer(fields[0], 0);
