@@ -154,7 +154,7 @@ std::chrono::year_month_day Table::parseDate(std::string dateString, std::string
 }
 
 void Table::setDestination(std::string value) {
-  (*cursor)[headers.size() - 1] = value;
+  writeCell(headers.size() - 1, value);
 }
 
 Table::ConstIterator Table::cbegin() const { return data.cbegin(); }
@@ -190,11 +190,32 @@ float Table::parseAmount(std::string format, std::string cell) {
 }
 
 void Table::storeAmount(int column, std::string format, float value) {
+  std::string formattedValue = std::vformat(format,
+      std::make_format_args(value));
   if (descriptor.debitColumn == descriptor.creditColumn) {
     int singleColumn = descriptor.debitColumn;
-    (*cursor)[singleColumn] = std::vformat(format,
-	std::make_format_args(value));
+    writeCell(singleColumn, formattedValue);
   } else {
-    (*cursor)[column] = std::vformat(format, std::make_format_args(value));
+    writeCell(column, formattedValue);
   }
+}
+
+void Table::writeCell(int column, std::string value) {
+  // Update the column's width, if necessary, before inserting the value into
+  // the cell
+  int& columnWidth = columnWidths[column];
+  auto& cell = (*cursor)[column];
+  if (value.size() > columnWidth) {
+    columnWidth = value.size();
+  } else if (cell.size() == columnWidth && value.size() < columnWidth) {
+    // If the cell being modified is currently the widest in the column and is
+    // to be narrower after the insertion, determine the next largest cell in
+    // the column
+    int newMaxWidth = headers[column].size();
+    for (auto row : data) {
+      if (row[column].size() > newMaxWidth) newMaxWidth = row[column].size();
+    }
+    columnWidth = newMaxWidth;
+  }
+  cell = value;
 }

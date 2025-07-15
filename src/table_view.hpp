@@ -21,7 +21,6 @@ public:
 private:
   Table& table;
   WINDOW* window;
-  std::vector<int> columnWidths;
   int height;
   int width;
   std::deque<std::string> view;
