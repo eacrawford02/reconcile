@@ -7,26 +7,9 @@ namespace {
 
 TableView::TableView(Table& table, WINDOW* window) : table{table},
     window{window} {
-  columnWidths = table.displayWidths();
-
   getmaxyx(window, height, width);
   // Reserve first two lines for column headers and header divider
   height -= 2;
-
-  std::vector<std::string> headers = table.displayHeaders();
-  // Format header row by adding padding and column dividers
-  std::string formattedHeaders;
-  for (int i = 0; i < headers.size(); i++) {
-    formattedHeaders.append(headers[i]);
-    int padding = columnWidths[i] - headers[i].size();
-    formattedHeaders.append(padding, ' ');
-    formattedHeaders.append(columnDivider);
-  }
-  int position = formattedHeaders.size() - columnSpacing;
-  formattedHeaders.replace(position, columnSpacing, columnSpacing, ' ');
-  mvwprintw(window, 0, 0, "%s", formattedHeaders.c_str());
-  // Print header divider
-  mvwprintw(window, 1, 0, "%s", std::string{}.append(width, '-').c_str());
 
   refresh();
 }
@@ -96,6 +79,25 @@ void TableView::draw() {
   wrefresh(window);
 }
 void TableView::refresh() {
+  // Refresh header row (in case column widths have changed)
+  std::vector<int> columnWidths = table.displayWidths();
+  std::vector<std::string> headers = table.displayHeaders();
+  // Format header row by adding padding and column dividers
+  std::string formattedHeaders;
+  for (int i = 0; i < headers.size(); i++) {
+    formattedHeaders.append(headers[i]);
+    int padding = columnWidths[i] - headers[i].size();
+    formattedHeaders.append(padding, ' ');
+    formattedHeaders.append(columnDivider);
+  }
+  int position = formattedHeaders.size() - columnSpacing;
+  formattedHeaders.replace(position, columnSpacing, columnSpacing, ' ');
+  mvwprintw(window, 0, 0, "%s", formattedHeaders.c_str());
+
+  // Print header divider (overwrites any portion of the headers that may have
+  // been wrapped to the second line if the screen is too small)
+  mvwprintw(window, 1, 0, "%s", std::string{}.append(width, '-').c_str());
+
   // Refresh view contents with rows from table
   view.clear();
   int viewSize = height > table.length() ? table.length() : height;
@@ -105,6 +107,7 @@ void TableView::refresh() {
 }
 
 std::string TableView::format(std::vector<std::string> row) {
+  std::vector<int> columnWidths = table.displayWidths();
   std::string formattedRow;
   for (int i = 0; i < row.size(); i++) {
     formattedRow.append(row[i]);

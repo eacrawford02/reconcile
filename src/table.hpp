@@ -40,6 +40,7 @@ private:
   void storeAmount(int column, std::string format, float value);
   std::chrono::year_month_day parseDate(std::string dateString, std::string
       dateFormat) const;
+  void writeCell(int columnt, std::string value);
   std::string globalDateFormat;
   Descriptor descriptor;
   std::vector<int> columnWidths;
@@ -52,6 +53,7 @@ private:
     for (int column : descriptor.displayColumns) {
       displayedColumns.push_back(row[column]);
     }
+    displayedColumns.push_back(row.back()); // Always include destination column
     return displayedColumns;
   }
 };
