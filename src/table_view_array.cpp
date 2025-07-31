@@ -36,9 +36,6 @@ TableViewArray::~TableViewArray() {
 }
 
 void TableViewArray::scrollUp() {
-  tableViews[focusedIndex].focus = false;
-  tableViews[focusedIndex].draw(); // Remember to redraw after unfocusing
-
   int prevFocusedIndex = focusedIndex;
   focusedIndex = reverseFocus();
 
@@ -70,15 +67,16 @@ void TableViewArray::scrollUp() {
 
   // Focus on next closest table in reverse direction, applying the scroll
   // action if required
-  tableViews[focusedIndex].focus = true;
+  if (focusedIndex != prevFocusedIndex) {
+    tableViews[prevFocusedIndex].focus = false;
+    tableViews[prevFocusedIndex].draw(); // Remember to redraw after unfocusing
+    tableViews[focusedIndex].focus = true;
+  }
   if (carryScroll) tableViews[focusedIndex].scrollUp();
   tableViews[focusedIndex].draw();
 }
 
 void TableViewArray::scrollDown() {
-  tableViews[focusedIndex].focus = false;
-  tableViews[focusedIndex].draw(); // Remember to redraw after unfocusing
-
   int prevFocusedIndex = focusedIndex;
   // Look forward in currently focused table
   focusedIndex = forwardFocus();
@@ -112,7 +110,11 @@ void TableViewArray::scrollDown() {
   }
 
   // Focus on next closest table in forward direction
-  tableViews[focusedIndex].focus = true;
+  if (focusedIndex != prevFocusedIndex) {
+    tableViews[prevFocusedIndex].focus = false;
+    tableViews[prevFocusedIndex].draw(); // Remember to redraw after unfocusing
+    tableViews[focusedIndex].focus = true;
+  }
   tableViews[focusedIndex].draw();
 }
 
@@ -139,6 +141,8 @@ int TableViewArray::forwardFocus() {
     }
   };
   std::vector<int>::iterator nextTable;
+  // We use the min_element function because the smallest (i.e., earliest)
+  // forward-looking date will be closest to the currently focused date
   nextTable = std::min_element(indices.begin(), indices.end(), compare);
   return std::distance(indices.begin(), nextTable);
 }
@@ -163,6 +167,8 @@ int TableViewArray::reverseFocus() {
     }
   };
   std::vector<int>::iterator nextTable;
+  // We use the max_element function because the greatest (i.e., latest)
+  // backward-looking date will be closest to the currently focused date
   nextTable = std::max_element(indices.begin(), indices.end(), compare);
   return std::distance(indices.begin(), nextTable);
 }

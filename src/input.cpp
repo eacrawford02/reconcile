@@ -23,16 +23,26 @@ void Input::evaluate() {
     state = nextState(responseType, input);
     switch (state) {
       case RECORD:
+	table->setDestination(input);
+	tableViewArray.redrawFocusedView();
+	try {
+	  tableViewArray.scrollDown();
+	} catch (const std::out_of_range& e) { return; }
+	promptAfterScroll();
 	break;
       case AUTOCOMPLETE:
 	prompt.writeField(autocomplete.complete(input));
 	break;
       case SKIP:
-	tableViewArray.scrollDown();
+	try {
+	  tableViewArray.scrollDown();
+	} catch (const std::out_of_range& e) { return; }
 	promptAfterScroll();
 	break;
       case BACK:
-	tableViewArray.scrollUp();
+	try {
+	  tableViewArray.scrollUp();
+	} catch (const std::out_of_range& e) { break; }
 	promptAfterScroll();
 	break;
       case SPLIT:
