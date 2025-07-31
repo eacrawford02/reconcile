@@ -60,8 +60,13 @@ void TableView::scrollDown() {
 }
 
 void TableView::draw() {
-  wmove(window, 2, 0); // Don't erase the first two lines (headers and divider)
-  wclrtobot(window);
+  werase(window);
+  mvwprintw(window, 0, 0, "%s", formattedHeaders.c_str());
+
+  // Print header divider (overwrites any portion of the headers that may have
+  // been wrapped to the second line if the screen is too small)
+  mvwprintw(window, 1, 0, "%s", std::string{}.append(width, '-').c_str());
+  // Print each row of the view, highlighting the row pointed to by the cursor
   int cursorIndex = (table.cursor - table.cbegin()) - head;
   for (int i = 0; i < view.size(); i++) {
     if (i == cursorIndex) {
@@ -76,14 +81,20 @@ void TableView::draw() {
     }
     mvwprintw(window, i + 2, 0, "%s", view[i].c_str());
   }
+  // If the cursor index is equal to view.size()-1 (i.e., last index of view
+  // deque), then the COLOR_PAIR highlighting will be left on, since there are
+  // no remaining indicies for which the else clause of the above block will be
+  // triggered. Thus, we turn them off here as a catch-all
+  wattr_off(window, COLOR_PAIR(1), NULL);
+  wattr_off(window, COLOR_PAIR(2), NULL);
   wrefresh(window);
 }
+
 void TableView::refresh() {
   // Refresh header row (in case column widths have changed)
   std::vector<int> columnWidths = table.displayWidths();
   std::vector<std::string> headers = table.displayHeaders();
   // Format header row by adding padding and column dividers
-  std::string formattedHeaders;
   for (int i = 0; i < headers.size(); i++) {
     formattedHeaders.append(headers[i]);
     int padding = columnWidths[i] - headers[i].size();
@@ -92,11 +103,6 @@ void TableView::refresh() {
   }
   int position = formattedHeaders.size() - columnSpacing;
   formattedHeaders.replace(position, columnSpacing, columnSpacing, ' ');
-  mvwprintw(window, 0, 0, "%s", formattedHeaders.c_str());
-
-  // Print header divider (overwrites any portion of the headers that may have
-  // been wrapped to the second line if the screen is too small)
-  mvwprintw(window, 1, 0, "%s", std::string{}.append(width, '-').c_str());
 
   // Refresh view contents with rows from table
   view.clear();

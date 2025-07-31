@@ -168,6 +168,10 @@ std::vector<std::string> Table::stringToRow(std::string line) {
   while (std::getline(stream, value, ',')) {
     row.push_back(value);
   }
+  // Handle case of trailing comma (denoting an empty cell for the last column)
+  if (line.back() == ',') {
+    row.push_back("");
+  }
   return row;
 }
 

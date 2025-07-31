@@ -23,6 +23,7 @@ private:
   WINDOW* window;
   int height;
   int width;
+  std::string formattedHeaders;
   std::deque<std::string> view;
   int head = 0;
   int tail = 0;
