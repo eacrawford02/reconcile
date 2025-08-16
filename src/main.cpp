@@ -11,6 +11,7 @@
 #include "prompt.hpp"
 #include "input.hpp"
 #include "autocomplete.hpp"
+#include "transaction_map.hpp"
 
 int main(int argc, char* argv[]) {
   if (argc == 1) {
@@ -19,6 +20,7 @@ int main(int argc, char* argv[]) {
   }
 
   Autocomplete autocomplete{"sample_accounts.dat"};
+  TransactionMap transactionMap{"sample_transaction_map.toml"};
 
   toml::table const config = toml::parse_file("sample_config.toml");
   std::string dateFormat = config["output"]["date_format"].value_or("");
@@ -34,8 +36,9 @@ int main(int argc, char* argv[]) {
   // Configure ncurses
   initscr();
   start_color();
-  init_pair(1, COLOR_BLACK, COLOR_WHITE);
-  init_pair(2, COLOR_BLACK, 8);
+  init_pair(1, COLOR_BLACK, COLOR_WHITE); // Focused row cursor colour pair
+  init_pair(2, COLOR_BLACK, 8); // Unfocused row cursor colour pair
+  init_pair(3, 8, COLOR_BLACK); // Hint colour pair
   cbreak();
   keypad(stdscr, TRUE);
   noecho();
@@ -61,7 +64,7 @@ int main(int argc, char* argv[]) {
 
   TableViewArray tableViewArray{tables, tableContent};
   Prompt prompt{promptContent};
-  Input input{tableViewArray, prompt, autocomplete};
+  Input input{tableViewArray, prompt, autocomplete, transactionMap};
 
   input.evaluate();
 

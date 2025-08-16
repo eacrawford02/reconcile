@@ -1,6 +1,7 @@
 [output]
 file = "ledger_dat"
 date_format = "%Y-%m-%d"
+transaction_map = "sample_transaction_map.toml"
 
 [[accounts]]
 identifier = "XXXXXXXXXXXXXXX1"

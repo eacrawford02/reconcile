@@ -29,9 +29,19 @@ Prompt::~Prompt() {
   delwin(fieldWindow);
 }
 
-void Prompt::amountPrompt(float amount, std::vector<std::string> row) {
+void Prompt::amountPrompt(float amount, std::vector<std::string> row,
+    std::string hint) {
   if (amount >= 0) debitPrompt(row);
   else creditPrompt(row);
+
+  // Wait for form to be posted and fields set before attempting to change
+  // colours
+  if (!hint.empty()) {
+    showHint = true;
+    set_field_fore(fields[0], COLOR_PAIR(3));
+    set_field_back(fields[0], COLOR_PAIR(3));
+    writeField(hint);
+  }
 }
 
 void Prompt::splitPrompt(std::vector<std::string> row) {
@@ -45,6 +55,12 @@ Prompt::Type Prompt::response(std::string& value) {
 
   while (read) {
     inputChar = wgetch(window);
+
+    // Reset field colouring to default after first keyboard input is entered
+    if (showHint) {
+      set_field_fore(fields[0], COLOR_PAIR(0));
+      set_field_back(fields[0], COLOR_PAIR(0));
+    }
 
     switch (inputChar) {
       case KEY_ENTER:
@@ -81,9 +97,11 @@ Prompt::Type Prompt::response(std::string& value) {
 	form_driver(form, REQ_END_FIELD);
 	break;
       default:
+	if (showHint) form_driver(form, REQ_CLR_FIELD);
 	form_driver(form, inputChar);
 	break;
     }
+    showHint = false;
   }
 
   /*
@@ -102,6 +120,40 @@ Prompt::Type Prompt::response(std::string& value) {
   value = std::string{input, static_cast<std::string::size_type>(trim + 1)};
   return responseType;
 }
+
+/*
+ * Keeping for now in case I want to break hinting off into its own separate
+ * state machine
+ *
+ * void Prompt::updateHint(wchar_t input, std::string& hint) {
+ *   switch (hintState) {
+ *     case OFF:
+ *       if (hint.empty()) {
+ * 	hintState = OFF;
+ *       } else {
+ * 	set_field_fore(fields[0], COLOR_PAIR(3));
+ * 	set_field_back(fields[0], COLOR_PAIR(3));
+ * 	writeField(hint);
+ * 	hintState = ON;
+ *       }
+ *       break;
+ *     case ON:
+ *       hintState = OFF;
+ *       hint.clear();
+ *       // Reset field colouring to default
+ *       set_field_fore(fields[0], COLOR_PAIR(0));
+ *       set_field_back(fields[0], COLOR_PAIR(0));
+ *       // If a printable ASCII character is entered as input, clear the hint
+ *       // and register input
+ *       if (32 <= input && input <= 127) {
+ * 	form_driver(form, REQ_CLR_FIELD);
+ * 	form_driver(form, input);
+ *       }
+ *       break;
+ *   }
+ * }
+ *
+ */
 
 void Prompt::writeField(std::string contents) {
   set_field_buffer(fields[0], 0, contents.c_str());
