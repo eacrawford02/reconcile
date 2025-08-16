@@ -8,17 +8,19 @@
 #include "table_view_array.hpp"
 #include "prompt.hpp"
 #include "autocomplete.hpp"
+#include "transaction_map.hpp"
 
 class Input {
 public:
   Input(TableViewArray& tableViewArray, Prompt& prompt, Autocomplete&
-      autocomplete);
+      autocomplete, TransactionMap& transactionMap);
   void evaluate();
 private:
   enum State {RECORD, AUTOCOMPLETE, SKIP, BACK, SPLIT, RECORD_SPLIT, QUIT};
   TableViewArray& tableViewArray;
   Prompt& prompt;
   Autocomplete& autocomplete;
+  TransactionMap& transactionMap;
   State state = RECORD;
   Table* focusedTable();
   State nextState(Prompt::Type responseType, std::string input);

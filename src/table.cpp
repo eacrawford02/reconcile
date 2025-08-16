@@ -157,6 +157,15 @@ void Table::setDestination(std::string value) {
   writeCell(headers.size() - 1, value);
 }
 
+std::string Table::getPayee() {
+  std::string payee;
+  for (auto index : descriptor.payeeColumns) {
+    payee += (*cursor)[index] + ' ';
+  }
+  if (!payee.empty()) payee.pop_back();
+  return payee;
+}
+
 Table::ConstIterator Table::cbegin() const { return data.cbegin(); }
 
 Table::ConstIterator Table::cend() const { return data.cend(); }
