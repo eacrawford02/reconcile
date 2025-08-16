@@ -31,6 +31,7 @@ public:
   std::chrono::year_month_day getNextDate() const;
   std::chrono::year_month_day getPrevDate() const;
   void setDestination(std::string value);
+  std::string getPayee();
   ConstIterator cbegin() const; // Don't hold reference, may be invalidated
   ConstIterator cend() const; // Don't hold reference, may be invalidated
   Iterator cursor;

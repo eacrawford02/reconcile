@@ -1,8 +1,9 @@
 #include "input.hpp"
 
 Input::Input(TableViewArray& tableViewArray, Prompt& prompt, Autocomplete&
-    autocomplete) : tableViewArray{tableViewArray}, prompt{prompt},
-    autocomplete{autocomplete} {
+    autocomplete, TransactionMap& transactionMap) :
+  tableViewArray{tableViewArray}, prompt{prompt}, autocomplete{autocomplete},
+  transactionMap{transactionMap} {
   // Set up initial prompt
   promptAfterScroll();
 }
@@ -25,6 +26,7 @@ void Input::evaluate() {
       case RECORD:
 	table->setDestination(input);
 	tableViewArray.redrawFocusedView();
+	transactionMap.addRelation(table->getPayee(), input);
 	try {
 	  tableViewArray.scrollDown();
 	} catch (const std::out_of_range& e) { return; }
@@ -93,7 +95,8 @@ void Input::promptAfterScroll() {
   // Thus, we must re-query the TableViewArray for the currently focused table
   Table& table = tableViewArray.focusedTable();
   auto row = table.displayRow(table.cursor - table.cbegin());
-  prompt.amountPrompt(table.getAmount(), row);
+  auto hint = transactionMap.getDestination(table.getPayee());
+  prompt.amountPrompt(table.getAmount(), row, hint);
 }
 
 void Input::recordSplit(std::string input) {
