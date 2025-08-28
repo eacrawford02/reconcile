@@ -153,6 +153,10 @@ std::chrono::year_month_day Table::parseDate(std::string dateString, std::string
   return std::chrono::year_month_day{std::chrono::sys_days{date}};
 }
 
+std::string Table::getSource() { return descriptor.ledgerSource; }
+
+std::string Table::getDestination() { return (*cursor)[headers.size() - 1]; }
+
 void Table::setDestination(std::string value) {
   writeCell(headers.size() - 1, value);
 }
@@ -165,6 +169,8 @@ std::string Table::getPayee() {
   if (!payee.empty()) payee.pop_back();
   return payee;
 }
+
+Table::Iterator Table::begin() { return data.begin(); }
 
 Table::ConstIterator Table::cbegin() const { return data.cbegin(); }
 

@@ -12,6 +12,7 @@
 #include "input.hpp"
 #include "autocomplete.hpp"
 #include "transaction_map.hpp"
+#include "formatter.hpp"
 
 int main(int argc, char* argv[]) {
   if (argc == 1) {
@@ -23,7 +24,7 @@ int main(int argc, char* argv[]) {
   TransactionMap transactionMap{"sample_transaction_map.toml"};
 
   toml::table const config = toml::parse_file("sample_config.toml");
-  std::string dateFormat = config["output"]["date_format"].value_or("");
+  std::string dateFormat = config["date_format"].value_or("");
   StatementImporter importer{config};
 
   std::vector<Table> tables;
@@ -67,6 +68,9 @@ int main(int argc, char* argv[]) {
   Input input{tableViewArray, prompt, autocomplete, transactionMap};
 
   input.evaluate();
+
+  std::ofstream ledgerOutput{config["output"]["file"].value_or("")};
+  ledgerOutput << Formatter{tables, *config["output"]["format"].as_table()};
 
   delwin(tableContent);
   delwin(promptBorder);
