@@ -1,7 +1,12 @@
-[output]
-file = "ledger_dat"
 date_format = "%Y-%m-%d %a"
 transaction_map = "sample_transaction_map.toml"
+
+[output]
+file = "ledger_dat"
+format.locale = "en_US.UTF-8"
+format.indentation = 4 # Number of spaces each posting should be indented by
+format.margin = 8 # Number of spaces between the end of the destination/source
+		  # account and the beginning of the amount
 
 [[accounts]]
 identifier = "XXXXXXXXXXXXXXX1"
