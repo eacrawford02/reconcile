@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include <ncurses.h>
 
@@ -20,10 +21,57 @@ int main(int argc, char* argv[]) {
     exit(0);
   }
 
-  Autocomplete autocomplete{"sample_accounts.dat"};
-  TransactionMap transactionMap{"sample_transaction_map.toml"};
+#ifdef DEBUG
+  std::filesystem::path configFile{std::filesystem::current_path() / CONF};
 
-  toml::table const config = toml::parse_file("sample_config.toml");
+  if (!std::filesystem::exists(configFile)) {
+    std::cerr << "Error: Could not find config file at path ";
+    std::cerr << configFile << '\n';
+    return 1;
+  }
+#else
+  std::filesystem::path configFile;
+  if (char const* home = std::getenv("HOME")) {
+    configFile = std::filesystem::path{home} / CONF;
+  } else {
+    std::cerr << "Error: User's $HOME environment variable is not set\n";
+    return 1;
+  }
+
+  // If no config file exists at the expected path, attempt to copy the sample
+  // config file that was installed along with the program
+  if (!std::filesystem::exists(configFile)) {
+    std::filesystem::path sampleConfigFile{SAMPLE_CONF};
+    std::cerr << "Info: Could not find config file at path " << configFile;
+    std::cerr << ", attempting to copy sample config file from ";
+    std::cerr << sampleConfigFile << '\n';
+    if (std::filesystem::exists(sampleConfigFile)) {
+      if (!std::filesystem::exists(configFile.parent_path())) {
+	try {
+	  std::filesystem::create_directories(configFile.parent_path());
+	} catch (std::filesystem::filesystem_error const& e) {
+	  std::cerr << "Error: Unable to create config file parent directory - ";
+	  std::cerr << e.what() << '\n';
+	  return 1;
+	}
+      }
+
+      try {
+	std::filesystem::copy_file(sampleConfigFile, configFile);
+      } catch (std::filesystem::filesystem_error const& e) {
+	std::cerr << "Error: Unable to copy sample config file - ";
+	std::cerr << e.what() << '\n';
+	return 1;
+      }
+    } else {
+      std::cerr << "Error: Could not find sample config file at path ";
+      std::cerr << sampleConfigFile << '\n';
+      return 1;
+    }
+  }
+#endif
+
+  toml::table const config = toml::parse_file(configFile.string());
   std::string dateFormat = config["date_format"].value_or("");
   StatementImporter importer{config};
 
@@ -65,11 +113,18 @@ int main(int argc, char* argv[]) {
 
   TableViewArray tableViewArray{tables, tableContent};
   Prompt prompt{promptContent};
+
+  // TODO: Move Autocomplete and TransactionMap instantiations into Input class
+  // TODO: pull filenames from config table
+  Autocomplete autocomplete{"sample_accounts.dat"};
+  TransactionMap transactionMap{"sample_transaction_map.toml"};
   Input input{tableViewArray, prompt, autocomplete, transactionMap};
 
   input.evaluate();
 
-  std::ofstream ledgerOutput{config["output"]["file"].value_or("")};
+  // Open the output file and append Ledger-formatted transactions from tables
+  std::string outputFile{config["output"]["file"].value_or("")};
+  std::ofstream ledgerOutput{outputFile, std::ios_base::app};
   ledgerOutput << Formatter{tables, *config["output"]["format"].as_table()};
 
   delwin(tableContent);
