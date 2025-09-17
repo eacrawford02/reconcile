@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Default install prefix
+prefix=/usr/local
+
+for arg in "$@"; do
+  case $arg in
+    --prefix=*)
+      prefix="${arg#*=}"
+      shift
+      ;;
+    *) # Print help message for any other string supplied as a positional param
+      echo "Usage: ./configure [--prefix=DIR]"
+      exit 1
+      ;;
+  esac
+done
+
+echo "Configuring with prefix=$prefix"
+
+# Use | as the sed substitution delimeter since prefix contains forward slashes
+sed -e "s|@prefix@|$prefix|g" Makefile.in > Makefile
