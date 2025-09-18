@@ -1,5 +1,4 @@
 date_format = "%Y-%m-%d %a"
-transaction_map = "sample_transaction_map.toml"
 
 [output]
 file = "ledger_dat"
