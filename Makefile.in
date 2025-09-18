@@ -12,20 +12,24 @@ OBJDIR = build # DO NOT SET TO obj. This directory name has a special meaning in
 DEPDIR = .deps
 BIN = reconcile
 DEBUGBIN = $(BIN).debug
-SAMPLECONF = sample_config.toml
+SAMPLECONF = sample_config.toml # Used either in debug mode or installed into
+				# $(PREFIX)/etc
 CONF = config.toml # Installed config file name
+MAP = transaction_map.toml
 PREFIX = @prefix@
 BINDIR = $(PREFIX)/bin
 SAMPLECONFDIR = $(PREFIX)/etc
 CONFDIR = .config/$(BIN)
+CACHEDIR = .cache/$(BIN)
 
 # Clang compiler flags/defines (again, should be immediate-expansion)
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP)
 CXXFLAGS = -std=c++20
 DEBUGFLAGS = -g -O0
-PRODDEFS = -DCONF=\"$(CONFDIR)/$(CONF)\" \
-	   -DSAMPLE_CONF=\"$(SAMPLECONFDIR)/$(SAMPLECONF)\"
-DEBUGDEFS = -DDEBUG -DCONF=\"$(SAMPLECONF)\"
+PRODDEFS = -DSAMPLE_CONF=\"$(SAMPLECONFDIR)/$(SAMPLECONF)\" \
+	   -DCONF=\"$(CONFDIR)/$(CONF)\" \
+	   -DMAP=\"$(CACHEDIR)/$(MAP)\"
+DEBUGDEFS = -DDEBUG -DCONF=\"$(SAMPLECONF)\" -DMAP=\"$(MAP)\"
 LDLIBS = -lform -lncurses
 
 # Create list of object file targets
