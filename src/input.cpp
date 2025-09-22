@@ -1,9 +1,45 @@
 #include "input.hpp"
 
-Input::Input(TableViewArray& tableViewArray, Prompt& prompt, Autocomplete&
-    autocomplete, TransactionMap& transactionMap) :
-  tableViewArray{tableViewArray}, prompt{prompt}, autocomplete{autocomplete},
-  transactionMap{transactionMap} {
+Input::Input(TableViewArray& tableViewArray, Prompt& prompt, std::string
+    accountsFile) : tableViewArray{tableViewArray}, prompt{prompt} {
+  try {
+    autocomplete = {accountsFile};
+  } catch (std::runtime_error const& e) {
+    // TODO: log warning properly
+    std::cerr << e.what() << '\n';
+  }
+
+#ifdef DEBUG
+  std::filesystem::path transactionMapFile;
+  transactionMapFile = std::filesystem::current_path() / MAP;
+  // std::filesystem::path is implicitly convertible to a string in this case
+  // (since std::string is explicitly defined as the constructor argument's
+  // type)
+  transactionMap = {transactionMapFile};
+#else
+  // Define transaction map file path
+  std::filesystem::path transactionMapFile;
+  if (char const* home = std::getenv("HOME")) {
+    transactionMapFile = std::filesystem::path{home} / MAP;
+  } else {
+    // TODO: log warning properly
+    std::cerr << "Warning: User's $HOME environment variable is not set, ";
+    std::cerr << "unable to access transaction mapping file at path ";
+    std::cerr << MAP << '\n';
+  }
+
+  // Create reconcile cache directory if it does not exist
+  if (!std::filesystem::exists(transactionMapFile.parent_path())) {
+    try {
+      std::filesystem::create_directories(transactionMapFile.parent_path());
+    } catch (std::filesystem::filesystem_error const& e) {
+      std::cerr << "Error: Unable to create transaction mapping file parent ";
+      std::cerr << "directory - " << e.what() << '\n';
+    }
+  }
+  transactionMap = {transactionMapFile};
+#endif
+
   // Set up initial prompt
   promptAfterScroll();
 }

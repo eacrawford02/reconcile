@@ -1,4 +1,6 @@
 date_format = "%Y-%m-%d %a"
+ledger_accounts = "sample_accounts.dat" # Note that ~ ($HOME in sh) is not
+					# resolved by the program
 
 [output]
 file = "ledger_dat"

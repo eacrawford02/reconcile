@@ -2,6 +2,8 @@
 #define INPUT_H
 
 #include <string>
+#include <filesystem>
+#include <iostream>
 
 #include <ncurses.h>
 
@@ -12,15 +14,15 @@
 
 class Input {
 public:
-  Input(TableViewArray& tableViewArray, Prompt& prompt, Autocomplete&
-      autocomplete, TransactionMap& transactionMap);
+  Input(TableViewArray& tableViewArray, Prompt& prompt, std::string
+      accountsFile);
   void evaluate();
 private:
   enum State {RECORD, AUTOCOMPLETE, SKIP, BACK, SPLIT, RECORD_SPLIT, QUIT};
   TableViewArray& tableViewArray;
   Prompt& prompt;
-  Autocomplete& autocomplete;
-  TransactionMap& transactionMap;
+  Autocomplete autocomplete;
+  TransactionMap transactionMap;
   State state = RECORD;
   Table* focusedTable();
   State nextState(Prompt::Type responseType, std::string input);

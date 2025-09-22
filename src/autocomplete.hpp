@@ -10,6 +10,7 @@
 class Autocomplete {
 public:
   Autocomplete(std::string accounts);
+  Autocomplete() = default;
   std::string complete(std::string partial);
 private:
   struct Node {

@@ -94,6 +94,7 @@ clean:
 	-rm -rf .deps
 	-rm -rf $(OBJDIR)/*.o
 	-rm $(BIN)
+	-rm $(DEBUGBIN)
 
 SRC = $(@:$(OBJDIR)%.o=$(SRCDIR)%.cpp)
 DEP = $(@:$(OBJDIR)%.o=$(DEPDIR)%.d)

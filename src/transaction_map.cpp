@@ -8,6 +8,12 @@ TransactionMap::TransactionMap(std::string mappingFile) {
   out = std::ofstream{mappingFile};
 }
 
+TransactionMap& TransactionMap::operator=(TransactionMap other) {
+  std::swap(map, other.map);
+  std::swap(out, other.out);
+  return *this;
+}
+
 TransactionMap::~TransactionMap() { out << map; }
 
 void TransactionMap::addRelation(std::string payee, std::string destination) {
