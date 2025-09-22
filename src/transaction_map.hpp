@@ -11,6 +11,8 @@
 class TransactionMap {
 public:
   TransactionMap(std::string mappingFile);
+  TransactionMap() = default;
+  TransactionMap& operator=(TransactionMap other);
   ~TransactionMap();
   void addRelation(std::string payee, std::string destination);
   std::string getDestination(std::string payee);

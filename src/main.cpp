@@ -11,8 +11,6 @@
 #include "table_view_array.hpp"
 #include "prompt.hpp"
 #include "input.hpp"
-#include "autocomplete.hpp"
-#include "transaction_map.hpp"
 #include "formatter.hpp"
 
 int main(int argc, char* argv[]) {
@@ -23,8 +21,6 @@ int main(int argc, char* argv[]) {
 
 #ifdef DEBUG
   std::filesystem::path configFile{std::filesystem::current_path() / CONF};
-  std::filesystem::path transactionMapFile;
-  transactionMapFile = std::filesystem::current_path() / MAP;
 
   if (!std::filesystem::exists(configFile)) {
     std::cerr << "Error: Could not find config file at path ";
@@ -34,10 +30,8 @@ int main(int argc, char* argv[]) {
 #else
   // Define config file and transaction map file paths
   std::filesystem::path configFile;
-  std::filesystem::path transactionMapFile;
   if (char const* home = std::getenv("HOME")) {
     configFile = std::filesystem::path{home} / CONF;
-    transactionMapFile = std::filesystem::path{home} / MAP;
   } else {
     std::cerr << "Error: User's $HOME environment variable is not set\n";
     return 1;
@@ -119,11 +113,8 @@ int main(int argc, char* argv[]) {
   TableViewArray tableViewArray{tables, tableContent};
   Prompt prompt{promptContent};
 
-  // TODO: Move Autocomplete and TransactionMap instantiations into Input class
-  // TODO: pull filenames from config table
-  Autocomplete autocomplete{"sample_accounts.dat"};
-  TransactionMap transactionMap{transactionMapFile};
-  Input input{tableViewArray, prompt, autocomplete, transactionMap};
+  std::string accountsFile = config["ledger_accounts"].value_or("");
+  Input input{tableViewArray, prompt, accountsFile};
 
   input.evaluate();
 
