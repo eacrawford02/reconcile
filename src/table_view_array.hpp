@@ -19,17 +19,21 @@ public:
   Table& focusedTable();
   void redrawFocusedView();
 private:
+  enum ScrollDirection {UP, DOWN};
   std::vector<WINDOW*> borders;
   std::vector<WINDOW*> contents;
   std::vector<Table>& tables;
   std::vector<TableView> tableViews;
   std::vector<int> indices;
+  std::vector<bool> cursorAtHead;
+  std::vector<ScrollDirection> lastTableScrolls;
   // Use an index instead of an iterator so that both tables and tableViews can
   // share the same variable
   int focusedIndex;
   int forwardFocus();
   int reverseFocus();
   std::chrono::year_month_day reverseDate(int tableIndex) const;
+  std::chrono::year_month_day forwardDate(int tableIndex) const;
 };
 
 #endif
