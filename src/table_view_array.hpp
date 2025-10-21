@@ -14,6 +14,8 @@ class TableViewArray {
 public:
   TableViewArray(std::vector<Table>& tables, WINDOW* window);
   ~TableViewArray();
+  // TODO: automatically detect and merge entries from separate accounts
+  // representing either sides of the same transaction
   void scrollUp(); // Bound-checking
   void scrollDown(); // Bound-checking
   Table& focusedTable();

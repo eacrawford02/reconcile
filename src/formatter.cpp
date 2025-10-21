@@ -1,5 +1,7 @@
 #include "formatter.hpp"
 
+// TODO: add ability to automatically handle debit/credit amounts for liability
+// and equity accounts
 Formatter::Formatter(std::vector<Table>& tables, toml::table const& format) :
     tables{tables} {
   locale = format["locale"].value_or("");

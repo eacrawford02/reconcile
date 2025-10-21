@@ -1,5 +1,6 @@
 #include "table.hpp"
 
+// TODO: Sort table after CSV file is loaded
 Table::Table(std::string statement, std::string globalDateFormat, Descriptor
     descriptor) : globalDateFormat{globalDateFormat}, descriptor(descriptor) {
   std::ifstream inputStream{statement};

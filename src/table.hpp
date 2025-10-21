@@ -13,6 +13,7 @@
 
 #include "statement_importer.hpp"
 
+// TODO: refactor
 class Table {
 public:
   typedef std::vector<std::vector<std::string>>::iterator Iterator;

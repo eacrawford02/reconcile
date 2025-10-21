@@ -44,6 +44,7 @@ Input::Input(TableViewArray& tableViewArray, Prompt& prompt, std::string
   promptAfterScroll();
 }
 
+// TODO: dynamically update autocomplete radix tree with new account names
 void Input::evaluate() {
   while (state != QUIT) {
     // Get input
@@ -71,6 +72,8 @@ void Input::evaluate() {
       case AUTOCOMPLETE:
 	prompt.writeField(autocomplete.complete(input));
 	break;
+      // TODO: give user option to select between pending and uncleared
+      // transaction states
       case SKIP:
 	try {
 	  tableViewArray.scrollDown();
