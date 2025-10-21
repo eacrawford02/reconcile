@@ -61,7 +61,7 @@ void Input::evaluate() {
     state = nextState(responseType, input);
     switch (state) {
       case RECORD:
-	table->setDestination(input);
+	table->setCounterparty(input);
 	tableViewArray.redrawFocusedView();
 	transactionMap.addRelation(table->getPayee(), input);
 	try {
@@ -134,7 +134,7 @@ void Input::promptAfterScroll() {
   // Thus, we must re-query the TableViewArray for the currently focused table
   Table& table = tableViewArray.focusedTable();
   auto row = table.displayRow(table.cursor - table.cbegin());
-  auto hint = transactionMap.getDestination(table.getPayee());
+  auto hint = transactionMap.getCounterparty(table.getPayee());
   prompt.amountPrompt(table.getAmount(), row, hint);
 }
 

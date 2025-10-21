@@ -9,7 +9,9 @@
 #include "toml.hpp"
 
 struct Descriptor {
+  enum AccountKind {DEBIT, CREDIT};
   std::string ledgerSource;
+  AccountKind normalBalance;
   int dateColumn;
   int debitColumn;
   int creditColumn;

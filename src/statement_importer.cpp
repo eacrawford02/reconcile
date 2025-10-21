@@ -5,6 +5,7 @@ namespace {
     constexpr std::string accountsArray = "accounts";
     constexpr std::string identifier = "identifier";
     constexpr std::string ledgerSource = "ledger_source";
+    constexpr std::string normalBalance = "normal_balance";
     constexpr std::string dateColumn = "date_column";
     constexpr std::string dateFormat = "date_format";
     constexpr std::string debitColumn = "debit_column";
@@ -13,6 +14,11 @@ namespace {
     constexpr std::string creditFormat = "credit_format";
     constexpr std::string payeeColumns = "payee_columns";
     constexpr std::string displayColumns = "display_columns";
+  }
+
+  namespace Value {
+    constexpr std::string debit = "DR";
+    constexpr std::string credit = "CR";
   }
 }
 
@@ -44,8 +50,20 @@ Descriptor StatementImporter::descriptor(std::string statementFile) {
     while (std::getline(inputStream, line)) {
       if (line.find(identifier) != std::string::npos) {
 	toml::table table = configsMap[identifier];
+
+	// Convert raw string value to enums representing accepted field values
+	std::string normalBalance = table[Key::normalBalance].value_or("");
+	Descriptor::AccountKind normalBalanceEnum = Descriptor::DEBIT;
+	if (normalBalance == Value::credit) {
+	  normalBalanceEnum = Descriptor::CREDIT;
+	} else if (normalBalance != Value::debit) {
+	  throw std::runtime_error("Error: Invalid value for " +
+	      Key::normalBalance);
+	}
+
 	struct Descriptor d = {
 	  .ledgerSource = table[Key::ledgerSource].value_or(""),
+	  .normalBalance = normalBalanceEnum,
 	  .dateColumn = table[Key::dateColumn].value_or(0),
 	  .debitColumn = table[Key::debitColumn].value_or(0),
 	  .creditColumn = table[Key::creditColumn].value_or(0),

@@ -15,7 +15,7 @@ public:
   TransactionMap& operator=(TransactionMap other);
   ~TransactionMap();
   void addRelation(std::string payee, std::string destination);
-  std::string getDestination(std::string payee);
+  std::string getCounterparty(std::string payee);
 private:
   toml::table map;
   std::ofstream out;

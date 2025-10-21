@@ -37,7 +37,7 @@ void TransactionMap::addRelation(std::string payee, std::string destination) {
   }
 }
 
-std::string TransactionMap::getDestination(std::string payee) {
+std::string TransactionMap::getCounterparty(std::string payee) {
   std::string result;
   // Retrieve the table nested under "payee" and check that it exists
   auto* payeeTable = map.get_as<toml::table>(payee);

@@ -154,11 +154,11 @@ std::chrono::year_month_day Table::parseDate(std::string dateString, std::string
   return std::chrono::year_month_day{std::chrono::sys_days{date}};
 }
 
-std::string Table::getSource() { return descriptor.ledgerSource; }
+std::string Table::getAccount() { return descriptor.ledgerSource; }
 
-std::string Table::getDestination() { return (*cursor)[headers.size() - 1]; }
+std::string Table::getCounterparty() { return (*cursor)[headers.size() - 1]; }
 
-void Table::setDestination(std::string value) {
+void Table::setCounterparty(std::string value) {
   writeCell(headers.size() - 1, value);
 }
 
@@ -176,6 +176,10 @@ Table::Iterator Table::begin() { return data.begin(); }
 Table::ConstIterator Table::cbegin() const { return data.cbegin(); }
 
 Table::ConstIterator Table::cend() const { return data.cend(); }
+
+Descriptor::AccountKind Table::normalBalance() {
+  return descriptor.normalBalance;
+}
 
 std::vector<std::string> Table::stringToRow(std::string line) {
   std::stringstream stream{line};

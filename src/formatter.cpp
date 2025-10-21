@@ -1,7 +1,5 @@
 #include "formatter.hpp"
 
-// TODO: add ability to automatically handle debit/credit amounts for liability
-// and equity accounts
 Formatter::Formatter(std::vector<Table>& tables, toml::table const& format) :
     tables{tables} {
   locale = format["locale"].value_or("");
@@ -22,7 +20,7 @@ std::ostream& operator<<(std::ostream& out, Formatter const& formatter) {
   // output based off of the widest source/destination string across all tables
   int amountAlignment = 0;
   for (auto& table : tables) {
-    int sourceWidth = table.getSource().size();
+    int sourceWidth = table.getAccount().size();
     int destinationWidth = table.displayWidths().back();
     amountAlignment = std::max({amountAlignment, sourceWidth,
 	destinationWidth});
@@ -71,28 +69,53 @@ std::ostream& operator<<(std::ostream& out, Formatter const& formatter) {
 void Formatter::formatRow(std::ostream& out, Table& table, int amountAlignment)
     const {
   out.imbue(std::locale(locale));
-  std::string destination = table.getDestination();
-  float amount;
   out << std::showbase; // Show dollar sign when reporting amount
   out << table.getDate() << ' ';
-  if (!destination.empty()) {
-    std::string destinationPadding;
-    destinationPadding.append(amountAlignment - destination.size(), ' ');
-    // TODO: amounts stored by table should really be denominated in cents and
-    // stored in integers
-    amount = table.getAmount() * 100;
+
+  std::string padding;
+  // TODO: amounts stored by table should really be denominated in cents and
+  // stored in integers
+  float amount = table.getAmount() * 100;
+
+  // Format either a complete transaction (two postings) or an incomplete
+  // transaction (one posting)
+  if (!table.getCounterparty().empty()) {
+    // Select the correct accounts to use for the positive-valued posting and
+    // the elided posting that constitute the Ledger transaction. See section
+    // 5.2 of Ledger manual for meaning of elision in a formatting context
+    std::string positiveAccount; // The debtor in the transaction
+    std::string elidedAccount; // The creditor in the transaction
+    if (table.normalBalance() == Descriptor::DEBIT) {
+      if (amount >= 0) { // DEBIT
+	positiveAccount = table.getAccount();
+	elidedAccount = table.getCounterparty();
+      } else { // CREDIT
+	amount = -amount;
+	positiveAccount = table.getCounterparty();
+	elidedAccount = table.getAccount();
+      }
+    } else { // table.normalBalance() == Descriptor::CREDIT
+      if (amount >= 0) { // CREDIT
+	positiveAccount = table.getCounterparty();
+	elidedAccount = table.getAccount();
+      } else { // DEBIT
+	amount = -amount;
+	positiveAccount = table.getAccount();
+	elidedAccount = table.getCounterparty();
+      }
+    }
+
+    padding.append(amountAlignment - positiveAccount.size(), ' ');
     out << "* ";
     out << table.getPayee() << '\n';
-    out << indentation << destination << destinationPadding;
-    out << margin  << std::put_money(amount) << '\n';
-    out << indentation << table.getSource();
+    out << indentation << positiveAccount << padding;
+    out << margin << std::put_money(amount) << '\n';
+    out << indentation << elidedAccount;
   } else {
-    std::string sourcePadding;
-    sourcePadding.append(amountAlignment - table.getSource().size(), ' ');
-    amount = -table.getAmount() * 100;
+    padding.append(amountAlignment - table.getAccount().size(), ' ');
     out << "! ";
     out << table.getPayee() << '\n';
-    out << indentation << table.getSource() << sourcePadding;
+    out << indentation << table.getAccount() << padding;
     out << margin  << std::put_money(amount);
   }
   out << '\n';

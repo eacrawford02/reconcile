@@ -31,13 +31,14 @@ public:
   std::chrono::year_month_day getDate() const;
   std::chrono::year_month_day getNextDate() const;
   std::chrono::year_month_day getPrevDate() const;
-  std::string getSource();
-  std::string getDestination();
-  void setDestination(std::string value);
+  std::string getAccount();
+  std::string getCounterparty();
+  void setCounterparty(std::string value);
   std::string getPayee();
   Iterator begin(); // Don't hold reference, may be invalidated
   ConstIterator cbegin() const; // Don't hold reference, may be invalidated
   ConstIterator cend() const; // Don't hold reference, may be invalidated
+  Descriptor::AccountKind normalBalance();
   Iterator cursor;
 private:
   std::vector<std::string> stringToRow(std::string line);

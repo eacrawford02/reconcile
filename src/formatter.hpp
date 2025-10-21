@@ -11,6 +11,7 @@
 #include "toml.hpp"
 
 #include "table.hpp"
+#include "statement_importer.hpp"
 
 class Formatter {
 public:
