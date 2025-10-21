@@ -30,8 +30,10 @@ private:
   std::vector<bool> cursorAtHead;
   std::vector<ScrollDirection> lastTableScrolls;
   // Use an index instead of an iterator so that both tables and tableViews can
-  // share the same variable
-  int focusedIndex;
+  // share the same variable. Initialize to negative value to avoid returning
+  // the next date for table index 0 (integer default value) when performing
+  // initial forward focus in constructor
+  int focusedIndex = -1;
   int forwardFocus();
   int reverseFocus();
   std::chrono::year_month_day reverseDate(int tableIndex) const;
