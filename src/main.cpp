@@ -100,6 +100,7 @@ int main(int argc, char* argv[]) {
   const int tableHeight = LINES - promptHeight;
   //const int commandY = height - commandHeight;
 
+  // TODO: handle terminal resizing
   // Create windows
   WINDOW* tableContent = newwin(tableHeight, COLS, 0, 0);
   WINDOW* promptBorder = newwin(promptHeight, COLS, tableHeight, 0);

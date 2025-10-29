@@ -66,6 +66,9 @@ std::ostream& operator<<(std::ostream& out, Formatter const& formatter) {
   return out;
 }
 
+// TODO: Change name to formatTransaction(?) Add formatPosting function to
+// format a row that's been split as a compository posting in a single
+// transaction (will require tracking which rows in a table have been split)
 void Formatter::formatRow(std::ostream& out, Table& table, int amountAlignment)
     const {
   out.imbue(std::locale(locale));

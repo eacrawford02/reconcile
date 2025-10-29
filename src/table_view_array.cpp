@@ -167,6 +167,9 @@ void TableViewArray::redrawFocusedView() {
   tableViews[focusedIndex].draw();
 }
 
+// TODO: sort first by date and then by table view order (e.g., if all
+// forward/reverse dates across all tables are equal, then prioritise focusing
+// on table in left-to-right/right-to-left order)
 int TableViewArray::forwardFocus() {
   // Determine which row, accross all tables, has the closest transaction date
   auto compare = [this](int a, int b) {
