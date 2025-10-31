@@ -78,9 +78,10 @@ bool Autocomplete::search(std::string value, Node*& result, int&
     currentNode = next;
   }
 
+  bool completeMatch = charactersFound == value.size();
   value = value.substr(charactersFound);
   result = currentNode;
-  return charactersFound == value.size();
+  return completeMatch;
 }
 
 void Autocomplete::insert(std::string value) {
