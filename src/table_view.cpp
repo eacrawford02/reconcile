@@ -92,6 +92,7 @@ void TableView::draw() {
 
 void TableView::refresh() {
   // Refresh header row (in case column widths have changed)
+  formattedHeaders.clear();
   std::vector<int> columnWidths = table.displayWidths();
   std::vector<std::string> headers = table.displayHeaders();
   // Format header row by adding padding and column dividers
