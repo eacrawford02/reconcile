@@ -11,7 +11,7 @@ TableView::TableView(Table& table, WINDOW* window) : table{table},
   // Reserve first two lines for column headers and header divider
   height -= 2;
 
-  refresh();
+  refresh(); // Refresh initializes tail to the correct value
 }
 
 void TableView::scrollUp() {
@@ -28,8 +28,7 @@ void TableView::scrollUp() {
   if (head > 0 && cursorIndex <= midpoint) {
     tail--;
     view.pop_back();
-    head--;
-    view.push_front(format(table.displayRow(head)));
+    view.push_front(format(table.displayRow(--head)));
   }
 }
 
@@ -54,8 +53,10 @@ void TableView::scrollDown() {
   if (tail < table.length() && cursorIndex >= midpoint) {
     head++;
     view.pop_front();
-    tail++;
-    view.push_back(format(table.displayRow(tail)));
+    // Post-increment tail so that when the view is scrolled to its bottom-most
+    // position (i.e., when tail is incremented such that it is equal to
+    // table.lenght()), we don't accidentally perform an out-of-bounds access
+    view.push_back(format(table.displayRow(tail++)));
   }
 }
 
@@ -108,7 +109,7 @@ void TableView::refresh() {
   // Refresh view contents with rows from table
   view.clear();
   int viewSize = height > table.length() ? table.length() : height;
-  for (tail = head; tail < viewSize; tail++) {
+  for (tail = head; tail < head + viewSize; tail++) {
     view.push_back(format(table.displayRow(tail)));
   }
 }
