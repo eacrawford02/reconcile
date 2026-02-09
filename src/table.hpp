@@ -5,63 +5,41 @@
 #include <vector>
 #include <fstream>
 #include <stdexcept>
-#include <sstream>
 #include <chrono>
-#include <format>
-
-#include "date.h"
 
 #include "statement_importer.hpp"
+#include "row.hpp"
 
-// TODO: refactor
 class Table {
 public:
-  typedef std::vector<std::vector<std::string>>::iterator Iterator;
-  typedef std::vector<std::vector<std::string>>::const_iterator ConstIterator;
+  typedef std::vector<Row>::iterator Iterator;
+  typedef std::vector<Row>::const_iterator ConstIterator;
   Table(std::string statement, std::string globalDateFormat, Descriptor
       descriptor);
   int length();
   int width();
-  std::vector<int> displayWidths();
-  std::vector<std::string> displayHeaders();
-  std::vector<std::string> displayRow(int row);
-  void duplicate();
-  float getAmount();
-  void setAmount(float value);
-  std::chrono::year_month_day getDate() const;
-  std::chrono::year_month_day getNextDate() const;
-  std::chrono::year_month_day getPrevDate() const;
+  Row& operator[](int index);
+  Iterator insert(ConstIterator position, const Row& value);
+  Amount amount(ConstIterator position);
+  void amount(Iterator position, Amount value);
+  std::chrono::year_month_day getDate(ConstIterator position) const;
   std::string getAccount();
-  std::string getCounterparty();
-  void setCounterparty(std::string value);
-  std::string getPayee();
+  std::string getCounterparty(ConstIterator position);
+  void setCounterparty(Iterator position, std::string value);
+  std::string getPayee(ConstIterator position);
   Iterator begin(); // Don't hold reference, may be invalidated
+  Iterator end(); // Don't hold reference, may be invalidated
   ConstIterator cbegin() const; // Don't hold reference, may be invalidated
   ConstIterator cend() const; // Don't hold reference, may be invalidated
   Descriptor::AccountKind normalBalance();
-  Iterator cursor;
 private:
-  std::vector<std::string> stringToRow(std::string line);
-  float parseAmount(std::string format, std::string cell);
-  void storeAmount(int column, std::string format, float value);
-  std::chrono::year_month_day parseDate(std::string dateString, std::string
-      dateFormat) const;
-  void writeCell(int columnt, std::string value);
+  void updateWidth(int column, std::string existing, std::string value);
   std::string globalDateFormat;
   Descriptor descriptor;
   std::vector<int> columnWidths;
-  std::vector<std::string> headers;
-  std::vector<std::vector<std::string>> data;
-
-  template<typename T>
-  std::vector<T> displayColumns(std::vector<T> row) {
-    std::vector<T> displayedColumns;
-    for (int column : descriptor.displayColumns) {
-      displayedColumns.push_back(row[column]);
-    }
-    displayedColumns.push_back(row.back()); // Always include destination column
-    return displayedColumns;
-  }
+  Row headers;
+  std::vector<std::string> formatting;
+  std::vector<Row> rows;
 };
 
 #endif

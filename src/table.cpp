@@ -24,92 +24,68 @@ Table::Table(std::string statement, std::string globalDateFormat, Descriptor
   }
 
   // Break first valid row up into column names, start tracking column widths
-  headers = stringToRow(line);
-  for (auto header : headers) columnWidths.push_back(header.size());
+  headers = Row(line);
+  for (auto header : headers) {
+    columnWidths.push_back(header.as<std::string>().size());
+  }
 
   // Add category column
-  headers.push_back("Destination");
-  columnWidths.push_back(headers[headers.size() - 1].size());
+  std::string categoryHeader = "Destination";
+  headers.push_back(Cell(categoryHeader));
+  columnWidths.push_back(categoryHeader.size());
+
+  // For dynamic formatting string lookup in updateWidth function
+  formatting = std::vector<std::string>(headers.size());
+  formatting[descriptor.dateColumn] = globalDateFormat;
+  formatting[descriptor.debitColumn] = descriptor.debitFormat;
+  formatting[descriptor.creditColumn] = descriptor.creditFormat;
 
   // Process remainder of file
   while (std::getline(inputStream, line)) {
-    std::vector<std::string> row = stringToRow(line);
-
-    // Convert the date to the global date format
-    std::string& dateCell = row[descriptor.dateColumn];
-    std::string statementDateFormat = descriptor.dateFormat;
-    std::chrono::year_month_day date = parseDate(dateCell, statementDateFormat);
-    std::string convertedDate = std::vformat("{:" + globalDateFormat + "}",
-	std::make_format_args(date));
-    dateCell = convertedDate;
-
-    row.push_back(""); // Empty string for category column
-    data.push_back(row);
+    // Parse row, adding a trailing comma to create a category column
+    Row row{line + ',', descriptor.dateColumn};
+    rows.push_back(row);
     
     // Keep track of column widths
     for (int i = 0; i < row.size(); i++) {
-      if (row[i].size() > columnWidths[i]) {
-	columnWidths[i] = row[i].size();
+      int width = row[i].as<std::string>().size();
+      if (width > columnWidths[i]) {
+	columnWidths[i] = width;
       }
     }
-  }
-  inputStream.close();
 
-  cursor = data.begin();
+    // Parse strings in date column (for efficiency, also means that we don't
+    // have to pass parse string to each row for use in their operator<
+    // functions)
+    std::string format = descriptor.dateFormat;
+    Cell& original = row[descriptor.dateColumn];
+    Cell parsed{original.as<std::chrono::year_month_day>(format)};
+    original = std::move(parsed);
+  }
+
+  inputStream.close();
 }
 
-int Table::length() { return data.size(); }
+int Table::length() { return rows.size(); }
 
 int Table::width() { return headers.size(); }
 
-std::vector<int> Table::displayWidths() { return displayColumns(columnWidths); }
+Row& Table::operator[](int index) { return rows[index]; }
 
-std::vector<std::string> Table::displayHeaders() {
-  return displayColumns(headers);
+Table::Iterator Table::insert(Table::ConstIterator position, const Row& value) {
+  return rows.insert(position, value);
 }
 
-std::vector<std::string> Table::displayRow(int row) {
-  return displayColumns(data[row]);
-}
-
-void Table::duplicate() {
-  // Note that if the vector is at capacity (the number of elements stored in
-  // the vector is equal to the number of elements the vector has space
-  // allocated for) then an insert will cause an internal reallocation and copy
-  // to occur, which will invalidate all element iterators and references. We
-  // thus need to stash the iterator index and get a new iterator lease to avoid
-  // illegal memory acesses during future operations on the vector
-  int index = cursor - data.cbegin();
-  // Apparently (according to Clang) std::vector:iterator is implicitly
-  // convertible to std::vector::const_iterator (can't find any docs confirming
-  // this, though)
-  data.insert(cursor, *cursor);
-  // Get new iterator handle
-  cursor = data.begin() + index;
-}
-
-float Table::getAmount() {
+Amount Table::amount(Table::ConstIterator position) {
   if (descriptor.debitColumn == descriptor.creditColumn) {
-    std::string cell = (*cursor)[descriptor.debitColumn];
-    float amount;
-    try {
-      amount = parseAmount(descriptor.debitFormat, cell);
-    } catch (const std::runtime_error& e) {
-      try {
-	amount = parseAmount(descriptor.creditFormat, cell);
-      } catch (const std::runtime_error& e) {
-	throw std::runtime_error("Error: cell value \"" + cell + "\" does not "
-	    "match either debit or credit format specifiers");
-      }
-    }
-    return amount;
+    return (*position)[descriptor.debitColumn].as<Amount>();
   } else {
-    std::string debitCell = (*cursor)[descriptor.debitColumn];
-    std::string creditCell = (*cursor)[descriptor.creditColumn];
-    if (debitCell != "") {
-      return parseAmount(descriptor.debitFormat, debitCell);
-    } else if (creditCell != "") {
-      return parseAmount(descriptor.creditFormat, creditCell);
+    Cell debitCell = (*position)[descriptor.debitColumn];
+    Cell creditCell = (*position)[descriptor.creditColumn];
+    if (!debitCell.as<std::string>().empty()) {
+      return debitCell.as<Amount>(descriptor.debitFormat);
+    } else if (!creditCell.as<std::string>().empty()) {
+      return creditCell.as<Amount>(descriptor.creditFormat);
     } else {
       throw std::runtime_error("Error: neither debit nor credit columns "
 	  "contain a value");
@@ -117,129 +93,107 @@ float Table::getAmount() {
   }
 }
 
-void Table::setAmount(float value) {
+void Table::amount(Table::Iterator position, Amount value) {
+  int column;
+  std::string format;
+  int complementaryColumn;
+  std::string complementaryFormat;
+
   if (value >= 0) {
-    storeAmount(descriptor.debitColumn, descriptor.debitFormat, value);
+    column = descriptor.debitColumn;
+    format = descriptor.debitFormat;
+    complementaryColumn = descriptor.creditColumn;
+    complementaryFormat = descriptor.creditFormat;
   } else {
-    storeAmount(descriptor.creditColumn, descriptor.creditFormat, value);
+    column = descriptor.creditColumn;
+    format = descriptor.creditFormat;
+    complementaryColumn = descriptor.debitColumn;
+    complementaryFormat = descriptor.debitFormat;
+  }
+
+  // Overwrite existing cell and update column width tracking
+  Cell cell{value};
+  Cell& existingCell = (*position)[column];
+  updateWidth(column, existingCell.as<std::string>(format),
+      cell.as<std::string>(format));
+  existingCell = cell;
+
+  // If the existing value is negated and there are separate columns for debits
+  // & credits, then we must clear the cell in the complementary column to avoid
+  // having two amounts in a single row
+  if (descriptor.debitColumn != descriptor.creditColumn) {
+    Cell& complementaryCell = (*position)[complementaryColumn];
+    if (!complementaryCell.as<std::string>(complementaryFormat).empty()) {
+      auto complementaryValue =
+	  complementaryCell.as<Amount>(complementaryFormat);
+      // Amount type is a signed integer, so if the two amounts are of opposite
+      // signs, then their respective MSBs are opposites and therefore taking
+      // their bitwise XOR will produce a negative number
+      if ((value ^ complementaryValue) < 0) {
+	complementaryCell = Cell{std::string("")}; // TODO: add erase function
+      }
+    }
   }
 }
 
-std::chrono::year_month_day Table::getDate() const {
-  return parseDate((*cursor)[descriptor.dateColumn], globalDateFormat);
-}
-
-std::chrono::year_month_day Table::getNextDate() const {
-  if (cursor == data.cend()) {
-    throw std::out_of_range("Attempting to access out of range element");
-  }
-  return parseDate((*(cursor + 1))[descriptor.dateColumn], globalDateFormat);
-}
-
-std::chrono::year_month_day Table::getPrevDate() const {
-  if (cursor == data.cbegin()) {
-    throw std::out_of_range("Attempting to access out of range element");
-  }
-  return parseDate((*(cursor - 1))[descriptor.dateColumn], globalDateFormat);
-}
-
-std::chrono::year_month_day Table::parseDate(std::string dateString, std::string
-    dateFormat) const {
-  std::istringstream dateStream{dateString};
-  // FIXME: replace date library with std::chrono once Clang C++20 Calendar
-  // extenstion is complete
-  date::year_month_day date;
-  date::from_stream(dateStream, dateFormat.c_str(), date);
-  // Convert date::year_month_day back to std::chrono::year_month_day
-  return std::chrono::year_month_day{std::chrono::sys_days{date}};
+std::chrono::year_month_day Table::getDate(Table::ConstIterator position) const {
+  Cell cell = (*position)[descriptor.dateColumn];
+  return cell.as<std::chrono::year_month_day>(globalDateFormat);
 }
 
 std::string Table::getAccount() { return descriptor.ledgerSource; }
 
-std::string Table::getCounterparty() { return (*cursor)[headers.size() - 1]; }
-
-void Table::setCounterparty(std::string value) {
-  writeCell(headers.size() - 1, value);
+std::string Table::getCounterparty(Table::ConstIterator position) {
+  return (*position)[headers.size() - 1].as<std::string>();
 }
 
-std::string Table::getPayee() {
+void Table::setCounterparty(Table::Iterator position, std::string value) {
+  int column = headers.size() - 1;
+  Cell cell{value};
+  Cell& existingCell = (*position)[column];
+  updateWidth(column, existingCell.as<std::string>(), cell.as<std::string>());
+  existingCell = cell;
+}
+
+std::string Table::getPayee(Table::ConstIterator position) {
   std::string payee;
   for (auto index : descriptor.payeeColumns) {
-    payee += (*cursor)[index] + ' ';
+    payee += (*position)[index].as<std::string>() + ' ';
   }
   if (!payee.empty()) payee.pop_back();
   return payee;
 }
 
-Table::Iterator Table::begin() { return data.begin(); }
+Table::Iterator Table::begin() { return rows.begin(); }
 
-Table::ConstIterator Table::cbegin() const { return data.cbegin(); }
+Table::Iterator Table::end() { return rows.end(); }
 
-Table::ConstIterator Table::cend() const { return data.cend(); }
+Table::ConstIterator Table::cbegin() const { return rows.cbegin(); }
+
+Table::ConstIterator Table::cend() const { return rows.cend(); }
 
 Descriptor::AccountKind Table::normalBalance() {
   return descriptor.normalBalance;
 }
 
-std::vector<std::string> Table::stringToRow(std::string line) {
-  std::stringstream stream{line};
-  std::string value;
-  std::vector<std::string> row;
-  while (std::getline(stream, value, ',')) {
-    row.push_back(value);
-  }
-  // Handle case of trailing comma (denoting an empty cell for the last column)
-  if (line.back() == ',') {
-    row.push_back("");
-  }
-  return row;
-}
-
-float Table::parseAmount(std::string format, std::string cell) {
-  int floatStart = format.find('{');
-  std::string prefix = format.substr(0, floatStart);
-  std::string suffix = format.substr(format.find('}') + 1);
-  bool prefixFound = cell.find(prefix) != std::string::npos;
-  bool suffixFound = cell.find(suffix) != std::string::npos;
-
-  if (prefixFound && suffixFound) {
-    int suffixSize = format.size() - format.find('}') - 1;
-    int cellSuffixStart = cell.size() - suffixSize;
-    float amount = std::stof(cell.substr(floatStart, cellSuffixStart));
-    return amount;
-  } else {
-    throw std::runtime_error("Error parsing \"" + cell + "\": invalid amount "
-	"format \"" + format + "\"");
-  }
-}
-
-void Table::storeAmount(int column, std::string format, float value) {
-  std::string formattedValue = std::vformat(format,
-      std::make_format_args(value));
-  if (descriptor.debitColumn == descriptor.creditColumn) {
-    int singleColumn = descriptor.debitColumn;
-    writeCell(singleColumn, formattedValue);
-  } else {
-    writeCell(column, formattedValue);
-  }
-}
-
-void Table::writeCell(int column, std::string value) {
+void Table::updateWidth(int column, std::string existing, std::string value) {
   // Update the column's width, if necessary, before inserting the value into
   // the cell
   int& columnWidth = columnWidths[column];
-  auto& cell = (*cursor)[column];
   if (value.size() > columnWidth) {
     columnWidth = value.size();
-  } else if (cell.size() == columnWidth && value.size() < columnWidth) {
+  } else if (existing.size() == columnWidth && value.size() < columnWidth) {
     // If the cell being modified is currently the widest in the column and is
     // to be narrower after the insertion, determine the next largest cell in
     // the column
-    int newMaxWidth = headers[column].size();
-    for (auto row : data) {
-      if (row[column].size() > newMaxWidth) newMaxWidth = row[column].size();
+    int newMaxWidth = headers[column].as<std::string>().size();
+    for (auto row : rows) {
+      // Since the column index is a parameter, we don't know the stored type of
+      // the column we're examining and thus must provide the appropriate
+      // formatting string when casting the Cell's stored type to a string
+      int width = row[column].as<std::string>(formatting[column]).size();
+      if (width > newMaxWidth) newMaxWidth = width;
     }
     columnWidth = newMaxWidth;
   }
-  cell = value;
 }
