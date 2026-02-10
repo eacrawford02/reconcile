@@ -20,6 +20,8 @@ public:
   bool focus = false;
 private:
   Table& table;
+  int index = 0;
+  std::vector<int> displayColumns;
   WINDOW* window;
   int height;
   int width;
@@ -27,7 +29,7 @@ private:
   std::deque<std::string> view;
   int head = 0;
   int tail = 0;
-  std::string format(std::vector<std::string> row);
+  std::string format(Row const& row);
 };
 
 #endif

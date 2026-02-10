@@ -20,6 +20,9 @@ public:
   int width();
   Row& operator[](int index);
   Iterator insert(ConstIterator position, const Row& value);
+  int columnWidth(int column) const;
+  // TODO: potentially move out of Table class
+  std::string formatString(int column) const;
   Amount amount(ConstIterator position);
   void amount(Iterator position, Amount value);
   std::chrono::year_month_day getDate(ConstIterator position) const;
@@ -32,12 +35,12 @@ public:
   ConstIterator cbegin() const; // Don't hold reference, may be invalidated
   ConstIterator cend() const; // Don't hold reference, may be invalidated
   Descriptor::AccountKind normalBalance();
+  std::vector<int> const& displayColumns();
 private:
   void updateWidth(int column, std::string existing, std::string value);
   std::string globalDateFormat;
   Descriptor descriptor;
   std::vector<int> columnWidths;
-  Row headers;
   std::vector<std::string> formatting;
   std::vector<Row> rows;
 };

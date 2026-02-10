@@ -185,7 +185,7 @@ public:
   using GenericCell::as;
 
   template<typename T>
-  T as(std::string specifier) { throw std::bad_cast(); }
+  T as(std::string specifier) const { throw std::bad_cast(); }
 };
 
 /*
@@ -199,9 +199,13 @@ public:
 // done in the constructor since there's no clean way to instruct the
 // constructor what type the string should be parsed into
 template<>
-Amount Cell::as<Amount>(std::string parse) {
+Amount Cell::as<Amount>(std::string parse) const {
   if (typeID == typeid(std::string).hash_code()) {
-    std::string value = *reinterpret_cast<std::string*>(buffer);
+    // Since this is a const member function, wherein all class data members are
+    // treated as const, we must reinterpret_cast the std::byte const* array to
+    // std::string const* to avoid casting away constness (not permitted by
+    // reinterpret_cast)
+    std::string value = *reinterpret_cast<std::string const*>(buffer);
     int amountStart = parse.find('{');
     std::string prefix = parse.substr(0, amountStart);
     std::string suffix = parse.substr(parse.find('}') + 1);
@@ -224,9 +228,9 @@ Amount Cell::as<Amount>(std::string parse) {
 
 template<>
 std::chrono::year_month_day Cell::as<std::chrono::year_month_day>(std::string
-    parse) {
+    parse) const {
   if (typeID == typeid(std::string).hash_code()) {
-    std::string value = *reinterpret_cast<std::string*>(buffer);
+    std::string value = *reinterpret_cast<std::string const*>(buffer);
     std::istringstream dateStream{value};
     // FIXME: replace date library with std::chrono once Clang C++20 Calendar
     // extenstion is complete
@@ -241,17 +245,18 @@ std::chrono::year_month_day Cell::as<std::chrono::year_month_day>(std::string
 
 // Formatting specialization
 template<>
-std::string Cell::as<std::string>(std::string format) {
+std::string Cell::as<std::string>(std::string format) const {
   if (typeID == typeid(std::string).hash_code()) {
-    return *reinterpret_cast<std::string*>(buffer);
+    return *reinterpret_cast<std::string const*>(buffer);
   } else if (typeID == typeid(Amount).hash_code()) {
     // Format amount
-    auto contents = *reinterpret_cast<Amount*>(buffer);
+    auto contents = *reinterpret_cast<Amount const*>(buffer);
     float amountFloatingPoint = contents / 100;
     return std::vformat(format, std::make_format_args(amountFloatingPoint));
   } else if (typeID == typeid(std::chrono::year_month_day).hash_code()) {
     // Format date
-    auto contents(*reinterpret_cast<std::chrono::year_month_day*>(buffer));
+    auto contents(*reinterpret_cast<std::chrono::year_month_day
+	const*>(buffer));
     return std::vformat("{:" + format + "}", std::make_format_args(contents));
   } else {
     throw std::bad_cast();

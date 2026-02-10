@@ -24,18 +24,18 @@ Table::Table(std::string statement, std::string globalDateFormat, Descriptor
   }
 
   // Break first valid row up into column names, start tracking column widths
-  headers = Row(line);
-  for (auto header : headers) {
+  rows[0] = Row(line);
+  for (auto header : rows[0]) {
     columnWidths.push_back(header.as<std::string>().size());
   }
 
   // Add category column
   std::string categoryHeader = "Destination";
-  headers.push_back(Cell(categoryHeader));
+  rows[0].push_back(Cell(categoryHeader));
   columnWidths.push_back(categoryHeader.size());
 
   // For dynamic formatting string lookup in updateWidth function
-  formatting = std::vector<std::string>(headers.size());
+  formatting = std::vector<std::string>(rows[0].size());
   formatting[descriptor.dateColumn] = globalDateFormat;
   formatting[descriptor.debitColumn] = descriptor.debitFormat;
   formatting[descriptor.creditColumn] = descriptor.creditFormat;
@@ -68,9 +68,13 @@ Table::Table(std::string statement, std::string globalDateFormat, Descriptor
 
 int Table::length() { return rows.size(); }
 
-int Table::width() { return headers.size(); }
+int Table::width() { return rows[0].size(); }
 
 Row& Table::operator[](int index) { return rows[index]; }
+
+int Table::columnWidth(int column) { return columnWidths[column]; }
+
+std::string Table::formatString(int column) { return formatting[column]; }
 
 Table::Iterator Table::insert(Table::ConstIterator position, const Row& value) {
   return rows.insert(position, value);
@@ -144,11 +148,11 @@ std::chrono::year_month_day Table::getDate(Table::ConstIterator position) const 
 std::string Table::getAccount() { return descriptor.ledgerSource; }
 
 std::string Table::getCounterparty(Table::ConstIterator position) {
-  return (*position)[headers.size() - 1].as<std::string>();
+  return (*position)[rows[0].size() - 1].as<std::string>();
 }
 
 void Table::setCounterparty(Table::Iterator position, std::string value) {
-  int column = headers.size() - 1;
+  int column = rows[0].size() - 1;
   Cell cell{value};
   Cell& existingCell = (*position)[column];
   updateWidth(column, existingCell.as<std::string>(), cell.as<std::string>());
@@ -176,6 +180,10 @@ Descriptor::AccountKind Table::normalBalance() {
   return descriptor.normalBalance;
 }
 
+std::vector<int> const& Table::displayColumns() {
+  return descriptor.displayColumns;
+}
+
 void Table::updateWidth(int column, std::string existing, std::string value) {
   // Update the column's width, if necessary, before inserting the value into
   // the cell
@@ -186,7 +194,7 @@ void Table::updateWidth(int column, std::string existing, std::string value) {
     // If the cell being modified is currently the widest in the column and is
     // to be narrower after the insertion, determine the next largest cell in
     // the column
-    int newMaxWidth = headers[column].as<std::string>().size();
+    int newMaxWidth = rows[0][column].as<std::string>().size();
     for (auto row : rows) {
       // Since the column index is a parameter, we don't know the stored type of
       // the column we're examining and thus must provide the appropriate

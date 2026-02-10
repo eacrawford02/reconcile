@@ -15,12 +15,12 @@ TableView::TableView(Table& table, WINDOW* window) : table{table},
 }
 
 void TableView::scrollUp() {
-  if (table.cursor == table.cbegin()) {
+  if (index == 0) {
     throw std::out_of_range("Attempting to scroll past beginning of table");
   }
-  table.cursor--;
+  index--;
 
-  int cursorIndex = (table.cursor - table.cbegin()) - head;
+  int cursorIndex = index - head;
   int midpoint = view.size() / 2 + 1;
 
   // Don't scroll down if the top of the table is already in view or if the
@@ -28,24 +28,24 @@ void TableView::scrollUp() {
   if (head > 0 && cursorIndex <= midpoint) {
     tail--;
     view.pop_back();
-    view.push_front(format(table.displayRow(--head)));
+    view.push_front(format(table[--head]));
   }
 }
 
 void TableView::scrollDown() {
-  if (table.cursor == (table.cend() - 1)) {
+  if (index == (table.length() - 1)) {
     // Trailing scroll so that TableViewArray doesn't get "stuck" on a table
     // that has been scrolled to its bottom (if the cursor still points to the
     // last row when at the bottom of the table, the comparisons between tables
     // in TableViewArray, which uses the date of the row being pointed to, will
     // always select the table that has been scrolled to its bottom since it
     // technically has the earliest date)
-    table.cursor++;
+    index++;
     throw std::out_of_range("Attempting to scroll past end of table");
   }
-  table.cursor++;
+  index++;
 
-  int cursorIndex = (table.cursor - table.cbegin()) - head;
+  int cursorIndex = index - head;
   int midpoint = view.size() / 2 + 1;
 
   // Don't scroll down if the bottom of the table is already in view or if the
@@ -56,7 +56,7 @@ void TableView::scrollDown() {
     // Post-increment tail so that when the view is scrolled to its bottom-most
     // position (i.e., when tail is incremented such that it is equal to
     // table.lenght()), we don't accidentally perform an out-of-bounds access
-    view.push_back(format(table.displayRow(tail++)));
+    view.push_back(format(table[tail++]));
   }
 }
 
@@ -68,7 +68,7 @@ void TableView::draw() {
   // been wrapped to the second line if the screen is too small)
   mvwprintw(window, 1, 0, "%s", std::string{}.append(width, '-').c_str());
   // Print each row of the view, highlighting the row pointed to by the cursor
-  int cursorIndex = (table.cursor - table.cbegin()) - head;
+  int cursorIndex = index - head;
   for (int i = 0; i < view.size(); i++) {
     if (i == cursorIndex) {
       if (focus) {
@@ -94,15 +94,16 @@ void TableView::draw() {
 void TableView::refresh() {
   // Refresh header row (in case column widths have changed)
   formattedHeaders.clear();
-  std::vector<int> columnWidths = table.displayWidths();
-  std::vector<std::string> headers = table.displayHeaders();
+  Row headers = table[0];
   // Format header row by adding padding and column dividers
-  for (int i = 0; i < headers.size(); i++) {
-    formattedHeaders.append(headers[i]);
-    int padding = columnWidths[i] - headers[i].size();
+  for (int i : table.displayColumns()) {
+    auto formattedHeader = headers[i].as<std::string>(table.formatString(i));
+    formattedHeaders.append(formattedHeader);
+    int padding = table.columnWidth(i) - formattedHeader.size();
     formattedHeaders.append(padding, ' ');
     formattedHeaders.append(columnDivider);
   }
+  // Replace trailing column divider with blank spaces
   int position = formattedHeaders.size() - columnSpacing;
   formattedHeaders.replace(position, columnSpacing, columnSpacing, ' ');
 
@@ -110,16 +111,17 @@ void TableView::refresh() {
   view.clear();
   int viewSize = height > table.length() ? table.length() : height;
   for (tail = head; tail < head + viewSize; tail++) {
-    view.push_back(format(table.displayRow(tail)));
+    view.push_back(format(table[tail]));
   }
 }
 
-std::string TableView::format(std::vector<std::string> row) {
-  std::vector<int> columnWidths = table.displayWidths();
+std::string TableView::format(Row const& row) {
+  std::vector<int> displayColumns = table.displayColumns();
   std::string formattedRow;
-  for (int i = 0; i < row.size(); i++) {
-    formattedRow.append(row[i]);
-    int padding = columnWidths[i] - row[i].size() + columnSpacing;
+  for (int i : table.displayColumns()) {
+    std::string formattedCell = row[i].as<std::string>(table.formatString(i));
+    formattedRow.append(formattedCell);
+    int padding = table.columnWidth(i) - formattedCell.size() + columnSpacing;
     formattedRow.append(padding, ' ');
   }
   //formattedRow.resize(formattedRow.size() - columnSpacing);
