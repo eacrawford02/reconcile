@@ -164,6 +164,10 @@ void TableViewArray::scrollDown() {
 
 Table& TableViewArray::focusedTable() { return tables[focusedIndex]; }
 
+TableView& TableViewArray::focusedTableView() {
+  return tableViews[focusedIndex];
+}
+
 void TableViewArray::redrawFocusedView() { 
   tableViews[focusedIndex].refresh();
   tableViews[focusedIndex].draw();

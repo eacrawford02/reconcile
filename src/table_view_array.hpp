@@ -19,6 +19,7 @@ public:
   void scrollUp(); // Bound-checking
   void scrollDown(); // Bound-checking
   Table& focusedTable();
+  TableView& focusedTableView();
   void redrawFocusedView();
 private:
   enum ScrollDirection {UP, DOWN};

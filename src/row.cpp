@@ -2,7 +2,7 @@
 
 Row::Row() : sortColumn{-1} {}
 
-Row::Row(std::string line, int const& sortColumn) : sortColumn{sortColumn} {
+Row::Row(std::string line, int sortColumn) : sortColumn{sortColumn} {
   std::stringstream stream{line};
   std::string value;
   for (int i = 0; std::getline(stream, value, ','); i++) {
@@ -10,13 +10,8 @@ Row::Row(std::string line, int const& sortColumn) : sortColumn{sortColumn} {
   }
   // Handle case of trailing comma (denoting an empty cell for the last column)
   if (line.back() == ',') {
-    cells.push_back("");
+    cells.push_back(std::string(""));
   }
-}
-
-Row::Row& operator=(Row::Row other) {
-  std::swap(*this, other);
-  return *this;
 }
 
 Cell& Row::operator[](int index) { return cells[index]; }

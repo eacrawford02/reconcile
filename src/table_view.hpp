@@ -13,6 +13,8 @@
 class TableView {
 public:
   TableView(Table& table, WINDOW* window);
+  std::string operator[](int index);
+  Row rowView(int index = -1);
   void scrollUp(); // Bound-checking
   void scrollDown(); // Bound-checking
   int cursorIndex() const;

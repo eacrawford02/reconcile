@@ -56,14 +56,18 @@ void Input::evaluate() {
       continue; // Let the user re-attempt to enter valid input
     }
 
+    // Can't declare variables inside switch statement. Pointers so that they
+    // can be reassigned after resizing operations
     Table* table = &tableViewArray.focusedTable();
+    TableView* tableView = &tableViewArray.focusedTableView();
+    Table::Iterator iterator = table->begin() + tableView->cursorIndex();
 
     state = nextState(responseType, input);
     switch (state) {
       case RECORD:
-	table->setCounterparty(input);
+	table->setCounterparty(iterator, input);
 	tableViewArray.redrawFocusedView();
-	transactionMap.addRelation(table->getPayee(), input);
+	transactionMap.addRelation(table->getPayee(iterator), input);
 	try {
 	  tableViewArray.scrollDown();
 	} catch (const std::out_of_range& e) { return; }
@@ -87,7 +91,7 @@ void Input::evaluate() {
 	promptAfterScroll();
 	break;
       case SPLIT:
-	prompt.splitPrompt(table->displayRow(table->cursor - table->cbegin()));
+	prompt.splitPrompt(tableView->rowView());
 	break;
       case RECORD_SPLIT:
 	recordSplit(input);
@@ -133,28 +137,33 @@ void Input::promptAfterScroll() {
   // Recall that a scroll action may change which table is currently focused.
   // Thus, we must re-query the TableViewArray for the currently focused table
   Table& table = tableViewArray.focusedTable();
-  auto row = table.displayRow(table.cursor - table.cbegin());
-  auto hint = transactionMap.getCounterparty(table.getPayee());
-  prompt.amountPrompt(table.getAmount(), row, hint);
+  TableView& tableView = tableViewArray.focusedTableView();
+  Table::ConstIterator iterator = table.begin() + tableView.cursorIndex();
+  auto row = tableView.rowView();
+  auto hint = transactionMap.getCounterparty(table.getPayee(iterator));
+  prompt.amountPrompt(table.amount(iterator), row, hint);
 }
 
 void Input::recordSplit(std::string input) {
-  float residual;// = std::stof(input);
+  int residual;// = std::stof(input) * 100;
   // FIXME: uncomment above line, remove try-catch once ncurses validation bug
   // is fixed
   try {
-    residual = std::stof(input);
+    residual = std::stof(input) * 100;
   } catch (const std::exception& e) {
     state = SPLIT; // Let the user re-attempt to enter valid input
     return;
   }
   Table& table = tableViewArray.focusedTable();
-  table.duplicate();
-  table.setAmount(residual);
-  table.cursor++;
-  table.setAmount(table.getAmount() - residual);
-  table.cursor--;
+  TableView& tableView = tableViewArray.focusedTableView();
+  Table::Iterator iterator = table.begin() + tableView.cursorIndex();
+  Row duplicate = table[tableView.cursorIndex()];
+  table.insert(iterator, duplicate);
+  iterator = table.begin() + tableView.cursorIndex();
+  table.amount(iterator, residual);
+  iterator++;
+  table.amount(iterator, table.amount(iterator) - residual);
   tableViewArray.redrawFocusedView();
-  auto row = table.displayRow(table.cursor - table.cbegin());
-  prompt.amountPrompt(table.getAmount(), row);
+  auto row = tableView.rowView();
+  prompt.amountPrompt(table.amount(--iterator), row);
 }

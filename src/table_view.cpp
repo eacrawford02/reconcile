@@ -14,6 +14,22 @@ TableView::TableView(Table& table, WINDOW* window) : table{table},
   refresh(); // Refresh initializes tail to the correct value
 }
 
+std::string TableView::operator[](int index) {
+  // The same index shall return the same element between TableViews and their
+  // respective Tables
+  return view[index - head];
+}
+
+Row TableView::rowView(int index);
+  if (index < 0) index = this->index;
+  Row rowView;
+  for (int i : table.displayColumns()) {
+    auto formattedCell = table[index][i].as<std::string>(table.formatString(i));
+    rowView.push_back(formattedCell);
+  }
+  return rowView;
+}
+
 void TableView::scrollUp() {
   if (index == 0) {
     throw std::out_of_range("Attempting to scroll past beginning of table");

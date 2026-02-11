@@ -14,8 +14,7 @@ public:
   typedef std::vector<Cell>::const_iterator ConstIterator;
 
   Row();
-  Row(std::string line, int const& sortColumn = -1);
-  Row& operator=(Row other);
+  Row(std::string line, int sortColumn = -1);
   Cell& operator[](int index);
   Cell const& operator[](int index) const;
   bool operator<(Row const& other);
@@ -25,8 +24,8 @@ public:
   ConstIterator cbegin() const;
   ConstIterator cend() const;
   void push_back(Cell const& value);
-  int const& sortColumn;
 private:
+  int sortColumn;
   std::vector<Cell> cells;
 };
 
