@@ -60,6 +60,8 @@ void TableView::scrollDown() {
   }
 }
 
+int TableView::cursorIndex() const { return index; }
+
 void TableView::draw() {
   werase(window);
   mvwprintw(window, 0, 0, "%s", formattedHeaders.c_str());

@@ -66,7 +66,7 @@ Table::Table(std::string statement, std::string globalDateFormat, Descriptor
   inputStream.close();
 }
 
-int Table::length() { return rows.size(); }
+int Table::length() const { return rows.size(); }
 
 int Table::width() { return rows[0].size(); }
 

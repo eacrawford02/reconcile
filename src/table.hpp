@@ -16,7 +16,7 @@ public:
   typedef std::vector<Row>::const_iterator ConstIterator;
   Table(std::string statement, std::string globalDateFormat, Descriptor
       descriptor);
-  int length();
+  int length() const;
   int width();
   Row& operator[](int index);
   Iterator insert(ConstIterator position, const Row& value);

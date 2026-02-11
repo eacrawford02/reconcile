@@ -78,7 +78,7 @@ void TableViewArray::scrollUp() {
     // cursor from the first up-scroll may already be at the head of the table
     // (albeit untraversed). In that case we don't want to carry the scroll over
     // in the second up-scroll and instead just want to refocus
-    if (tables[focusedIndex].cursor != tables[focusedIndex].cbegin()) {
+    if (tableViews[focusedIndex].cursorIndex() != 0) {
       carryScroll = true;
     }
   }
@@ -103,7 +103,7 @@ void TableViewArray::scrollUp() {
   // yet traversed the row). We check here instead of the else clause in the try
   // block to ensure the case where a scroll reversal and carry occurs is
   // caught
-  if (tables[focusedIndex].cursor == tables[focusedIndex].cbegin()) {
+  if (tableViews[focusedIndex].cursorIndex() == 0) {
     cursorAtHead[focusedIndex] = true;
   }
 
@@ -124,7 +124,7 @@ void TableViewArray::scrollDown() {
     // from has not already reached its end (otherwise we will attempt to scroll
     // out of bounds)
     Table& prevTable = tables[prevFocusedIndex];
-    bool outOfBounds = prevTable.cursor == prevTable.cend();
+    bool outOfBounds = tableViews[prevFocusedIndex].cursorIndex() == prevTable.length();
     if (focusedIndex != prevFocusedIndex && !outOfBounds) {
       if (lastTableScrolls[focusedIndex] == UP) {
         tableViews[focusedIndex].scrollDown();
@@ -144,7 +144,9 @@ void TableViewArray::scrollDown() {
     }
   } catch (const std::out_of_range& e) {
     int count = 0;
-    for (auto& table : tables) if (table.cursor == table.cend()) count++;
+    for (int i : indices) {
+      if (tableViews[i].cursorIndex() == tables[i].length()) count++;
+    }
     if (count == tables.size()) {
       throw std::out_of_range("Attempting to scroll past end of view array");
     }
@@ -177,9 +179,9 @@ int TableViewArray::forwardFocus() {
     Table const& tableB = tables[b];
     // Ignore tables with their cursors at their tail by forcing them to the top
     // of the sort/min_element search
-    if (tableA.cursor >= (tableA.cend() - 1)) {
+    if (tableViews[a].cursorIndex() >= (tableA.length() - 1)) {
       return false;
-    } else if (tableB.cursor >= (tableB.cend() - 1)) {
+    } else if (tableViews[b].cursorIndex() >= (tableB.length() - 1)) {
       return true;
     } else {
       // If a particular table had last been subjected to a cross-table scroll
@@ -228,37 +230,39 @@ int TableViewArray::reverseFocus() {
 
 std::chrono::year_month_day TableViewArray::forwardDate(int tableIndex) const {
   Table const& table = tables[tableIndex];
+  TableView const& tableView = tableViews[tableIndex];
   if (focusedIndex == tableIndex) {
     // If the table is currently focused, return the next date
-    return table.getNextDate();
+    return table.getDate(table.cbegin() + tableView.cursorIndex() + 1);
   } else if (lastTableScrolls[tableIndex] == UP) {
     // Otherwise, if the table is unfocused (implied) AND the last scroll was in
     // the opposite direction, return the next date
-    return table.getNextDate();
+    return table.getDate(table.cbegin() + tableView.cursorIndex() + 1);
   } else {
     // Otherwise, return the date currently pointed to by the cursor
-    return table.getDate();
+    return table.getDate(table.cbegin() + tableView.cursorIndex());
   }
 };
 
 std::chrono::year_month_day TableViewArray::reverseDate(int tableIndex) const {
   Table const& table = tables[tableIndex];
-  if (focusedIndex == tableIndex && table.cursor != table.cbegin()) {
+  TableView const& tableView = tableViews[tableIndex];
+  if (focusedIndex == tableIndex && tableView.cursorIndex() != 0) {
     // If the table is currently focused AND the cursor is not at the
     // front, return the previous date
-    return table.getPrevDate();
-  } else if (table.cursor == table.cend()) {
+    return table.getDate(table.cbegin() + tableView.cursorIndex() - 1);
+  } else if (tableView.cursorIndex() == table.length()) {
     // Otherwise, if the cursor is at the back (out-of-range), return the
     // previous date
-    return table.getPrevDate();
+    return table.getDate(table.cbegin() + tableView.cursorIndex() - 1);
   } else if (lastTableScrolls[tableIndex] == DOWN &&
-	     table.cursor != table.cbegin()) {
+	     tableView.cursorIndex() != 0) {
     // Otherwise, if the table is unfocused (implied) AND the last scroll was in
     // the opposite direction AND the cursor is not at the front, return the
     // previous date
-    return table.getPrevDate();
+    return table.getDate(table.cbegin() + tableView.cursorIndex() - 1);
   } else {
     // Otherwise, return the date currently pointed to by the cursor
-    return table.getDate();
+    return table.getDate(table.cbegin() + tableView.cursorIndex());
   }
 };

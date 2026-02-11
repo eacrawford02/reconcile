@@ -15,6 +15,7 @@ public:
   TableView(Table& table, WINDOW* window);
   void scrollUp(); // Bound-checking
   void scrollDown(); // Bound-checking
+  int cursorIndex() const;
   void draw();
   void refresh();
   bool focus = false;
