@@ -15,15 +15,16 @@
 
 class Formatter {
 public:
-  Formatter(std::vector<Table>& tables, toml::table const& format);
+  Formatter(std::vector<Table> tables, toml::table const& format);
   friend std::ostream& operator<<(std::ostream& out, Formatter const&
       formatter);
 private:
-  std::vector<Table>& tables;
+  std::vector<Table> tables;
   std::string locale;
   std::string indentation;
-  std::string margin ;
-  void formatRow(std::ostream& out, Table& table, int amountAlignment) const;
+  std::string margin;
+  int amountAlignment;
+  void formatRow(std::ostream& out, Table const& table, int index) const;
 };
 
 #endif

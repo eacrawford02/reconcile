@@ -68,19 +68,19 @@ Table::Table(std::string statement, std::string globalDateFormat, Descriptor
 
 int Table::length() const { return rows.size(); }
 
-int Table::width() { return rows[0].size(); }
+int Table::width() const { return rows[0].size(); }
 
 Row& Table::operator[](int index) { return rows[index]; }
 
-int Table::columnWidth(int column) { return columnWidths[column]; }
+int Table::columnWidth(int column) const { return columnWidths[column]; }
 
-std::string Table::formatString(int column) { return formatting[column]; }
+std::string Table::formatString(int column) const { return formatting[column]; }
 
 Table::Iterator Table::insert(Table::ConstIterator position, const Row& value) {
   return rows.insert(position, value);
 }
 
-Amount Table::amount(Table::ConstIterator position) {
+Amount Table::amount(Table::ConstIterator position) const {
   if (descriptor.debitColumn == descriptor.creditColumn) {
     return (*position)[descriptor.debitColumn].as<Amount>();
   } else {
@@ -145,9 +145,9 @@ std::chrono::year_month_day Table::getDate(Table::ConstIterator position) const 
   return cell.as<std::chrono::year_month_day>(globalDateFormat);
 }
 
-std::string Table::getAccount() { return descriptor.ledgerSource; }
+std::string Table::getAccount() const { return descriptor.ledgerSource; }
 
-std::string Table::getCounterparty(Table::ConstIterator position) {
+std::string Table::getCounterparty(Table::ConstIterator position) const {
   return (*position)[rows[0].size() - 1].as<std::string>();
 }
 
@@ -159,7 +159,7 @@ void Table::setCounterparty(Table::Iterator position, std::string value) {
   existingCell = cell;
 }
 
-std::string Table::getPayee(Table::ConstIterator position) {
+std::string Table::getPayee(Table::ConstIterator position) const {
   std::string payee;
   for (auto index : descriptor.payeeColumns) {
     payee += (*position)[index].as<std::string>() + ' ';
@@ -176,7 +176,7 @@ Table::ConstIterator Table::cbegin() const { return rows.cbegin(); }
 
 Table::ConstIterator Table::cend() const { return rows.cend(); }
 
-Descriptor::AccountKind Table::normalBalance() {
+Descriptor::AccountKind Table::normalBalance() const {
   return descriptor.normalBalance;
 }
 
