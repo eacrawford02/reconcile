@@ -199,7 +199,7 @@ public:
 // done in the constructor since there's no clean way to instruct the
 // constructor what type the string should be parsed into
 template<>
-Amount Cell::as<Amount>(std::string parse) const {
+inline Amount Cell::as<Amount>(std::string parse) const {
   if (typeID == typeid(std::string).hash_code()) {
     // Since this is a const member function, wherein all class data members are
     // treated as const, we must reinterpret_cast the std::byte const* array to
@@ -227,7 +227,7 @@ Amount Cell::as<Amount>(std::string parse) const {
 }
 
 template<>
-std::chrono::year_month_day Cell::as<std::chrono::year_month_day>(std::string
+inline std::chrono::year_month_day Cell::as<std::chrono::year_month_day>(std::string
     parse) const {
   if (typeID == typeid(std::string).hash_code()) {
     std::string value = *reinterpret_cast<std::string const*>(buffer);
@@ -245,7 +245,7 @@ std::chrono::year_month_day Cell::as<std::chrono::year_month_day>(std::string
 
 // Formatting specialization
 template<>
-std::string Cell::as<std::string>(std::string format) const {
+inline std::string Cell::as<std::string>(std::string format) const {
   if (typeID == typeid(std::string).hash_code()) {
     return *reinterpret_cast<std::string const*>(buffer);
   } else if (typeID == typeid(Amount).hash_code()) {

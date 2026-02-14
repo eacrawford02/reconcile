@@ -18,7 +18,7 @@ public:
   Cell& operator[](int index);
   Cell const& operator[](int index) const;
   bool operator<(Row const& other);
-  int size();
+  int size() const;
   Iterator begin();
   Iterator end();
   ConstIterator cbegin() const;

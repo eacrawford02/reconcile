@@ -20,7 +20,7 @@ std::string TableView::operator[](int index) {
   return view[index - head];
 }
 
-Row TableView::rowView(int index);
+Row TableView::rowView(int index) {
   if (index < 0) index = this->index;
   Row rowView;
   for (int i : table.displayColumns()) {

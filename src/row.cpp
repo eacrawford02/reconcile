@@ -34,7 +34,7 @@ bool Row::operator<(Row const& other) {
   }
 }
 
-int Row::size() { return cells.size(); }
+int Row::size() const { return cells.size(); }
 
 Row::Iterator Row::begin() { return cells.begin(); }
 

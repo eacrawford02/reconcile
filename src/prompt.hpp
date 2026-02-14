@@ -7,14 +7,15 @@
 #include <ncurses.h>
 #include <form.h>
 
+#include "row.hpp"
+
 class Prompt {
 public:
   enum Type {TAB, ENTER};
   Prompt(WINDOW* window);
   ~Prompt();
-  void amountPrompt(float amount, std::vector<std::string> row,
-      std::string hint = "");
-  void splitPrompt(std::vector<std::string> row);
+  void amountPrompt(float amount, Row row, std::string hint = "");
+  void splitPrompt(Row row);
   Type response(std::string& value);
   void writeField(std::string contents);
 private:
@@ -24,10 +25,9 @@ private:
   FORM* form;
   int fieldPosition = 0;
   bool showHint;
-  void debitPrompt(std::vector<std::string> row);
-  void creditPrompt(std::vector<std::string> row);
-  void draw(std::vector<std::string> row, std::string message, bool
-      numericInput);
+  void debitPrompt(Row row);
+  void creditPrompt(Row row);
+  void draw(Row row, std::string message, bool numericInput);
 };
 
 #endif

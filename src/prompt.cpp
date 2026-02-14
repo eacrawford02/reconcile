@@ -29,7 +29,7 @@ Prompt::~Prompt() {
   delwin(fieldWindow);
 }
 
-void Prompt::amountPrompt(float amount, std::vector<std::string> row,
+void Prompt::amountPrompt(float amount, Row row,
     std::string hint) {
   if (amount >= 0) debitPrompt(row);
   else creditPrompt(row);
@@ -44,7 +44,7 @@ void Prompt::amountPrompt(float amount, std::vector<std::string> row,
   }
 }
 
-void Prompt::splitPrompt(std::vector<std::string> row) {
+void Prompt::splitPrompt(Row row) {
   draw(row, "What amount should the row being split retain? ", true);
 }
 
@@ -160,16 +160,15 @@ void Prompt::writeField(std::string contents) {
   form_driver(form, REQ_END_FIELD);
 }
 
-void Prompt::debitPrompt(std::vector<std::string> row) {
+void Prompt::debitPrompt(Row row) {
   draw(row, "From which account is this amount coming?" + options, false);
 }
 
-void Prompt::creditPrompt(std::vector<std::string> row) {
+void Prompt::creditPrompt(Row row) {
   draw(row, "To which account is this amount going?" + options, false);
 }
 
-void Prompt::draw(std::vector<std::string> row, std::string message, bool
-    numericInput) {
+void Prompt::draw(Row row, std::string message, bool numericInput) {
   werase(window);
 
   fieldPosition = message.size();
@@ -177,9 +176,10 @@ void Prompt::draw(std::vector<std::string> row, std::string message, bool
   std::string border{'+'};
   std::string content{'|'};
   for (auto cell : row) {
-    border.append(cell.size() + 2, '-');
+    std::string formattedCell = cell.as<std::string>();
+    border.append(formattedCell.size() + 2, '-');
     border.push_back('+');
-    content.append(" " + cell + " |");
+    content.append(" " + formattedCell + " |");
   }
 
   // Move field window out of the way so it doesn't block mvwaddstr output
