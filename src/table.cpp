@@ -39,11 +39,15 @@ Table::Table(std::string statement, std::string globalDateFormat, Descriptor
   formatting[descriptor.dateColumn] = globalDateFormat;
   formatting[descriptor.debitColumn] = descriptor.debitFormat;
   formatting[descriptor.creditColumn] = descriptor.creditFormat;
+  struct Row::Metadata metadata = {
+    .sortColumn = descriptor.dateColumn,
+    .formatting = formatting
+  };
 
   // Process remainder of file
   while (std::getline(inputStream, line)) {
     // Parse row, adding a trailing comma to create a category column
-    Row row{line + ',', descriptor.dateColumn};
+    Row row{line + ',', metadata};
 
     // Parse strings in date column (for efficiency, also means that we don't
     // have to pass parse string to each row for use in their operator<
@@ -146,7 +150,8 @@ void Table::amount(Table::Iterator position, Amount value) {
   }
 }
 
-std::chrono::year_month_day Table::getDate(Table::ConstIterator position) const {
+std::chrono::year_month_day Table::getDate(Table::ConstIterator position) const
+{
   Cell cell = (*position)[descriptor.dateColumn];
   return cell.as<std::chrono::year_month_day>();
 }

@@ -14,7 +14,6 @@ class TableView {
 public:
   TableView(Table& table, WINDOW* window);
   std::string operator[](int index);
-  Row rowView(int index = -1);
   void scrollUp(); // Bound-checking
   void scrollDown(); // Bound-checking
   int cursorIndex() const;
@@ -32,7 +31,7 @@ private:
   std::deque<std::string> view;
   int head = 1;
   int tail = 1;
-  std::string format(Row const& row);
+  std::string rowView(Row const& row);
 };
 
 #endif

@@ -91,7 +91,7 @@ void Input::evaluate() {
 	promptAfterScroll();
 	break;
       case SPLIT:
-	prompt.splitPrompt(tableView->rowView());
+	prompt.splitPrompt(iterator->format(table->displayColumns()));
 	break;
       case RECORD_SPLIT:
 	recordSplit(input);
@@ -139,7 +139,7 @@ void Input::promptAfterScroll() {
   Table& table = tableViewArray.focusedTable();
   TableView& tableView = tableViewArray.focusedTableView();
   Table::ConstIterator iterator = table.begin() + tableView.cursorIndex();
-  auto row = tableView.rowView();
+  auto row = iterator->format(table.displayColumns());
   auto hint = transactionMap.getCounterparty(table.getPayee(iterator));
   prompt.amountPrompt(table.amount(iterator), row, hint);
 }
@@ -164,6 +164,6 @@ void Input::recordSplit(std::string input) {
   iterator++;
   table.amount(iterator, table.amount(iterator) - residual);
   tableViewArray.redrawFocusedView();
-  auto row = tableView.rowView();
+  auto row = iterator->format(table.displayColumns());
   prompt.amountPrompt(table.amount(--iterator), row);
 }

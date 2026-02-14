@@ -20,16 +20,6 @@ std::string TableView::operator[](int index) {
   return view[index - head];
 }
 
-Row TableView::rowView(int index) {
-  if (index < 0) index = this->index;
-  Row rowView;
-  for (int i : table.displayColumns()) {
-    auto formattedCell = table[index][i].as<std::string>(table.formatString(i));
-    rowView.push_back(formattedCell);
-  }
-  return rowView;
-}
-
 void TableView::scrollUp() {
   if (index == 1) {
     throw std::out_of_range("Attempting to scroll past beginning of table");
@@ -44,7 +34,7 @@ void TableView::scrollUp() {
   if (head > 1 && cursorIndex <= midpoint) {
     tail--;
     view.pop_back();
-    view.push_front(format(table[--head]));
+    view.push_front(rowView(table[--head]));
   }
 }
 
@@ -72,7 +62,7 @@ void TableView::scrollDown() {
     // Post-increment tail so that when the view is scrolled to its bottom-most
     // position (i.e., when tail is incremented such that it is equal to
     // table.lenght()), we don't accidentally perform an out-of-bounds access
-    view.push_back(format(table[tail++]));
+    view.push_back(rowView(table[tail++]));
   }
 }
 
@@ -112,10 +102,10 @@ void TableView::draw() {
 void TableView::refresh() {
   // Refresh header row (in case column widths have changed)
   formattedHeaders.clear();
-  Row headers = table[0];
+  Row headers = table[0].format();
   // Format header row by adding padding and column dividers
   for (int i : table.displayColumns()) {
-    auto formattedHeader = headers[i].as<std::string>(table.formatString(i));
+    auto formattedHeader = headers[i].as<std::string>();
     formattedHeaders.append(formattedHeader);
     int padding = table.columnWidth(i) - formattedHeader.size();
     formattedHeaders.append(padding, ' ');
@@ -131,19 +121,18 @@ void TableView::refresh() {
   int rowsRemaining = table.length() - 1;
   int viewSize = height > rowsRemaining ? rowsRemaining : height;
   for (tail = head; tail < head + viewSize; tail++) {
-    view.push_back(format(table[tail]));
+    view.push_back(rowView(table[tail]));
   }
 }
 
-std::string TableView::format(Row const& row) {
-  std::vector<int> displayColumns = table.displayColumns();
-  std::string formattedRow;
+std::string TableView::rowView(Row const& row) {
+  Row formattedRow = row.format();
+  std::string rowView;
   for (int i : table.displayColumns()) {
-    std::string formattedCell = row[i].as<std::string>(table.formatString(i));
-    formattedRow.append(formattedCell);
+    auto formattedCell = formattedRow[i].as<std::string>();
+    rowView.append(formattedCell);
     int padding = table.columnWidth(i) - formattedCell.size() + columnSpacing;
-    formattedRow.append(padding, ' ');
+    rowView.append(padding, ' ');
   }
-  //formattedRow.resize(formattedRow.size() - columnSpacing);
-  return formattedRow;
+  return rowView;
 }
