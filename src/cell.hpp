@@ -227,8 +227,8 @@ inline Amount Cell::as<Amount>(std::string parse) const {
 }
 
 template<>
-inline std::chrono::year_month_day Cell::as<std::chrono::year_month_day>(std::string
-    parse) const {
+inline std::chrono::year_month_day
+Cell::as<std::chrono::year_month_day>(std::string parse) const {
   if (typeID == typeid(std::string).hash_code()) {
     std::string value = *reinterpret_cast<std::string const*>(buffer);
     std::istringstream dateStream{value};

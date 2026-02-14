@@ -34,7 +34,7 @@ std::ostream& operator<<(std::ostream& out, Formatter const& formatter) {
   for (int i = 0; i < tables.size(); i++) indices.push_back(i);
 
   // Reset each table's index to the start
-  std::vector<int> tableIndices = std::vector<int>(tables.size(), 0);
+  std::vector<int> tableIndices = std::vector<int>(tables.size(), 1);
 
   // Start tracking the number of tables whose cursors have not reached their
   // end
@@ -61,7 +61,7 @@ std::ostream& operator<<(std::ostream& out, Formatter const& formatter) {
     // smallest (i.e., earliest) date
     int index;
     index = *std::min_element(indices.begin(), indices.end(), compare);
-    formatter.formatRow(out, tables[index], index);
+    formatter.formatRow(out, tables[index], tableIndices[index]);
 
     // Each table will only hit this condition once since the following cursor
     // increment will put the table's cursor at its end and thus the table

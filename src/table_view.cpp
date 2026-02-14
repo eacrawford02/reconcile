@@ -31,7 +31,7 @@ Row TableView::rowView(int index) {
 }
 
 void TableView::scrollUp() {
-  if (index == 0) {
+  if (index == 1) {
     throw std::out_of_range("Attempting to scroll past beginning of table");
   }
   index--;
@@ -41,7 +41,7 @@ void TableView::scrollUp() {
 
   // Don't scroll down if the top of the table is already in view or if the
   // cursor hasn't yet reached the midpoint of the view
-  if (head > 0 && cursorIndex <= midpoint) {
+  if (head > 1 && cursorIndex <= midpoint) {
     tail--;
     view.pop_back();
     view.push_front(format(table[--head]));
@@ -127,7 +127,9 @@ void TableView::refresh() {
 
   // Refresh view contents with rows from table
   view.clear();
-  int viewSize = height > table.length() ? table.length() : height;
+  // Number of remaining rows in table less the header row
+  int rowsRemaining = table.length() - 1;
+  int viewSize = height > rowsRemaining ? rowsRemaining : height;
   for (tail = head; tail < head + viewSize; tail++) {
     view.push_back(format(table[tail]));
   }

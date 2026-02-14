@@ -24,7 +24,7 @@ Table::Table(std::string statement, std::string globalDateFormat, Descriptor
   }
 
   // Break first valid row up into column names, start tracking column widths
-  rows[0] = Row(line);
+  rows.push_back(Row(line));
   for (auto header : rows[0]) {
     columnWidths.push_back(header.as<std::string>().size());
   }
@@ -44,23 +44,27 @@ Table::Table(std::string statement, std::string globalDateFormat, Descriptor
   while (std::getline(inputStream, line)) {
     // Parse row, adding a trailing comma to create a category column
     Row row{line + ',', descriptor.dateColumn};
-    rows.push_back(row);
-    
-    // Keep track of column widths
-    for (int i = 0; i < row.size(); i++) {
-      int width = row[i].as<std::string>().size();
-      if (width > columnWidths[i]) {
-	columnWidths[i] = width;
-      }
-    }
 
     // Parse strings in date column (for efficiency, also means that we don't
     // have to pass parse string to each row for use in their operator<
-    // functions)
+    // functions). Must be done before row is added to rows vector since
+    // push_back creates a copy of the row object
     std::string format = descriptor.dateFormat;
     Cell& original = row[descriptor.dateColumn];
     Cell parsed{original.as<std::chrono::year_month_day>(format)};
     original = std::move(parsed);
+
+    rows.push_back(row);
+    
+    // Keep track of column widths
+    for (int i = 0; i < row.size(); i++) {
+      // Since dates column has been parsed, pass formatting string to re-format
+      // those cells
+      int width = row[i].as<std::string>(formatting[i]).size();
+      if (width > columnWidths[i]) {
+	columnWidths[i] = width;
+      }
+    }
   }
 
   inputStream.close();
@@ -82,7 +86,9 @@ Table::Iterator Table::insert(Table::ConstIterator position, const Row& value) {
 
 Amount Table::amount(Table::ConstIterator position) const {
   if (descriptor.debitColumn == descriptor.creditColumn) {
-    return (*position)[descriptor.debitColumn].as<Amount>();
+    // TODO: check that either debit or credit format strings are non-empty
+    Cell cell = (*position)[descriptor.debitColumn];
+    return cell.as<Amount>(descriptor.debitFormat);
   } else {
     Cell debitCell = (*position)[descriptor.debitColumn];
     Cell creditCell = (*position)[descriptor.creditColumn];
@@ -142,7 +148,7 @@ void Table::amount(Table::Iterator position, Amount value) {
 
 std::chrono::year_month_day Table::getDate(Table::ConstIterator position) const {
   Cell cell = (*position)[descriptor.dateColumn];
-  return cell.as<std::chrono::year_month_day>(globalDateFormat);
+  return cell.as<std::chrono::year_month_day>();
 }
 
 std::string Table::getAccount() const { return descriptor.ledgerSource; }

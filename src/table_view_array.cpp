@@ -78,7 +78,7 @@ void TableViewArray::scrollUp() {
     // cursor from the first up-scroll may already be at the head of the table
     // (albeit untraversed). In that case we don't want to carry the scroll over
     // in the second up-scroll and instead just want to refocus
-    if (tableViews[focusedIndex].cursorIndex() != 0) {
+    if (tableViews[focusedIndex].cursorIndex() != 1) {
       carryScroll = true;
     }
   }
@@ -103,7 +103,7 @@ void TableViewArray::scrollUp() {
   // yet traversed the row). We check here instead of the else clause in the try
   // block to ensure the case where a scroll reversal and carry occurs is
   // caught
-  if (tableViews[focusedIndex].cursorIndex() == 0) {
+  if (tableViews[focusedIndex].cursorIndex() == 1) {
     cursorAtHead[focusedIndex] = true;
   }
 
@@ -251,7 +251,7 @@ std::chrono::year_month_day TableViewArray::forwardDate(int tableIndex) const {
 std::chrono::year_month_day TableViewArray::reverseDate(int tableIndex) const {
   Table const& table = tables[tableIndex];
   TableView const& tableView = tableViews[tableIndex];
-  if (focusedIndex == tableIndex && tableView.cursorIndex() != 0) {
+  if (focusedIndex == tableIndex && tableView.cursorIndex() != 1) {
     // If the table is currently focused AND the cursor is not at the
     // front, return the previous date
     return table.getDate(table.cbegin() + tableView.cursorIndex() - 1);
@@ -260,7 +260,7 @@ std::chrono::year_month_day TableViewArray::reverseDate(int tableIndex) const {
     // previous date
     return table.getDate(table.cbegin() + tableView.cursorIndex() - 1);
   } else if (lastTableScrolls[tableIndex] == DOWN &&
-	     tableView.cursorIndex() != 0) {
+	     tableView.cursorIndex() != 1) {
     // Otherwise, if the table is unfocused (implied) AND the last scroll was in
     // the opposite direction AND the cursor is not at the front, return the
     // previous date

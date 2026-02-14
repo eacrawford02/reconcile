@@ -23,15 +23,15 @@ public:
   bool focus = false;
 private:
   Table& table;
-  int index = 0;
+  int index = 1;
   std::vector<int> displayColumns;
   WINDOW* window;
   int height;
   int width;
   std::string formattedHeaders;
   std::deque<std::string> view;
-  int head = 0;
-  int tail = 0;
+  int head = 1;
+  int tail = 1;
   std::string format(Row const& row);
 };
 
