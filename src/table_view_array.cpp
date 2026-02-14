@@ -124,9 +124,16 @@ void TableViewArray::scrollDown() {
     // from has not already reached its end (otherwise we will attempt to scroll
     // out of bounds)
     Table& prevTable = tables[prevFocusedIndex];
-    bool outOfBounds = tableViews[prevFocusedIndex].cursorIndex() == prevTable.length();
+    bool outOfBounds = tableViews[prevFocusedIndex].cursorIndex() ==
+		       prevTable.length();
     if (focusedIndex != prevFocusedIndex && !outOfBounds) {
-      if (lastTableScrolls[focusedIndex] == UP) {
+      // The one exception to incrementing the cursor when changing scroll
+      // directions is if the now-focused table has its cursor at its head. This
+      // is because on the previous scroll, that table would not have had its
+      // cursor decremented since it was already at the head of the view. Thus,
+      // there is no prior up-scroll that must be counteracted
+      bool cursorPastHead = tableViews[focusedIndex].cursorIndex() > 1;
+      if (lastTableScrolls[focusedIndex] == UP && cursorPastHead) {
         tableViews[focusedIndex].scrollDown();
       }
       tableViews[prevFocusedIndex].scrollDown();
