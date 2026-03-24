@@ -30,7 +30,11 @@ private:
   std::vector<TableView> tableViews;
   std::vector<int> indices;
   std::vector<bool> cursorAtHead;
-  std::vector<ScrollDirection> lastTableScrolls;
+  ScrollDirection prevScroll;
+  // A per-table flag indicating that a cross-table scroll out of a particular
+  // table has occurred, but focus has not yet been returned to said table via a
+  // later cross-table scroll into it
+  std::vector<bool> outstandingScrolls;
   // Use an index instead of an iterator so that both tables and tableViews can
   // share the same variable. Initialize to negative value to avoid returning
   // the next date for table index 0 (integer default value) when performing
@@ -40,6 +44,7 @@ private:
   int reverseFocus();
   std::chrono::year_month_day reverseDate(int tableIndex) const;
   std::chrono::year_month_day forwardDate(int tableIndex) const;
+  bool cursorInBounds(int tableIndex) const;
 };
 
 #endif

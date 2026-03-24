@@ -23,7 +23,8 @@ TableViewArray::TableViewArray(TableArray& tables, WINDOW* window) :
 
     indices.push_back(i);
     cursorAtHead.push_back(true);
-    lastTableScrolls.push_back(DOWN);
+    prevScroll = UP;
+    outstandingScrolls.push_back(false);
   }
 
   // Focus on a table
@@ -41,58 +42,56 @@ void TableViewArray::scrollUp() {
   int prevFocusedIndex = focusedIndex;
   focusedIndex = reverseFocus();
 
-  // If we attempt to scroll up when the focused table's cursor is already
-  // pointing to the first element, the effect of that scroll action on the
-  // TableViewArray is lost since no table will be scrolled. We still want the
-  // scroll action to carry over to the table with the closest previous date, so
-  // we must track this occurrence
-  bool carryScroll = false;
+  // If we are reversing scroll directions, then we want to decrement the
+  // cursors of all other TableViews so that they point to the next row to be
+  // traversed should the change in scroll direction continue to be maintained
+  if (prevScroll == DOWN) {
+    for (int i : indices) {
+      if (i != prevFocusedIndex && outstandingScrolls[i] && !cursorAtHead[i]) {
+	tableViews[i].scrollUp(); // Should not throw an exception due to
+				  // cursorAtHead guard
+	if (tableViews[i].cursorIndex() == 1) cursorAtHead[i] = true;
+	tableViews[i].draw();
+      }
+    }
+  }
+
+  prevScroll = UP;
+
+  if (focusedIndex != prevFocusedIndex && !cursorAtHead[prevFocusedIndex]) {
+    // Now that we have checked that there was no outstanding down-scroll for
+    // the previously focused table, we can safely set the corresponding
+    // outstanding scroll field. It is imperative that this be done before
+    // up-scrolling the previously focused table otherwise it may be erronously
+    // recorded as having no outstanding scrolls since it's cursor post-scroll
+    // may point to the first row, despite the fact that focus is shifting to
+    // another table (i.e., the first row remains untraversed)
+    outstandingScrolls[prevFocusedIndex] = true;
+  }
 
   try {
-    // If we are scrolling accross tables (as opposed to scrolling down in the
-    // same table), we don't want the cursor of the next focused table to change
-    // (unless we are reversing scroll directions, in which case we do).
-    // Instead, we want to advance the cursor of the table we are scrolling from
-    if (focusedIndex != prevFocusedIndex) {
-      if (lastTableScrolls[focusedIndex] == DOWN) {
-	// Set carryScroll to true instead of explicitly calling
-	// tableViews[focusedIndex].scrollUp() to avoid scrolling up twice (line
-	// 82)
-        carryScroll = true;
-      }
-      tableViews[prevFocusedIndex].scrollUp();
-      lastTableScrolls[prevFocusedIndex] = UP;
-    } else {
-      tableViews[focusedIndex].scrollUp();
-      lastTableScrolls[focusedIndex] = UP;
-    }
+    tableViews[prevFocusedIndex].scrollUp();
   } catch (const std::out_of_range& e) {
     int count = 0;
-    for (auto& i : indices) if (cursorAtHead[i]) count++;
+    for (int i : indices) {
+      // Qualifying whether or not the given table has an outstanding scroll
+      // verifies that not only is its cursor pointing to its first row, but
+      // that that first row has indeed been traversed
+      if (cursorAtHead[i] && !outstandingScrolls[i]) count++;
+    }
     if (count == tables.size()) {
       throw std::out_of_range("Attempting to scroll past end of view array");
     }
-
-    // If two consecutive up-scrolls occur and the first involved both scrolling
-    // across tables and was a scroll reversal, the previously focused table's
-    // cursor from the first up-scroll may already be at the head of the table
-    // (albeit untraversed). In that case we don't want to carry the scroll over
-    // in the second up-scroll and instead just want to refocus
-    if (tableViews[focusedIndex].cursorIndex() != 1) {
-      carryScroll = true;
-    }
   }
 
-  // Focus on next closest table in reverse direction, applying the scroll
-  // action if required
   if (focusedIndex != prevFocusedIndex) {
+    outstandingScrolls[focusedIndex] = false;
+
+    // Focus on next closest table in reverse direction, applying the scroll
+    // action if required
     tableViews[prevFocusedIndex].focus = false;
     tableViews[prevFocusedIndex].draw(); // Remember to redraw after unfocusing
     tableViews[focusedIndex].focus = true;
-  }
-  if (carryScroll) {
-    tableViews[focusedIndex].scrollUp();
-    lastTableScrolls[focusedIndex] = UP;
   }
 
   // If, at this point, the currently focused table's cursor is at the head of
@@ -103,8 +102,8 @@ void TableViewArray::scrollUp() {
   // yet traversed the row). We check here instead of the else clause in the try
   // block to ensure the case where a scroll reversal and carry occurs is
   // caught
-  if (tableViews[focusedIndex].cursorIndex() == 1) {
-    cursorAtHead[focusedIndex] = true;
+  if (tableViews[prevFocusedIndex].cursorIndex() == 1) {
+    cursorAtHead[prevFocusedIndex] = true;
   }
 
   tableViews[focusedIndex].draw();
@@ -115,57 +114,59 @@ void TableViewArray::scrollDown() {
   // Look forward in currently focused table
   focusedIndex = forwardFocus();
 
-  try {
-    // If we are scrolling across tables (as opposed to scrolling down in the
-    // same table), we don't want the cursor of the next focused table to change
-    // (unless we are reversing scroll directions, in which case we do).
-    // Instead, we want to advance the cursor of the table we are scrolling
-    // from. Of course, this should only be done if the table we are scrolling
-    // from has not already reached its end (otherwise we will attempt to scroll
-    // out of bounds)
-    Table& prevTable = tables[prevFocusedIndex];
-    bool outOfBounds = tableViews[prevFocusedIndex].cursorIndex() ==
-		       prevTable.length();
-    if (focusedIndex != prevFocusedIndex && !outOfBounds) {
-      // The one exception to incrementing the cursor when changing scroll
-      // directions is if the now-focused table has its cursor at its head. This
-      // is because on the previous scroll, that table would not have had its
-      // cursor decremented since it was already at the head of the view. Thus,
-      // there is no prior up-scroll that must be counteracted
-      bool cursorPastHead = tableViews[focusedIndex].cursorIndex() > 1;
-      if (lastTableScrolls[focusedIndex] == UP && cursorPastHead) {
-        tableViews[focusedIndex].scrollDown();
+  // If we are reversing scroll directions, then we want to increment the
+  // cursors of all other TableViews so that they point to the next row to be
+  // traversed should the change in scroll direction continue to be maintained
+  if (prevScroll == UP) {
+    for (int i : indices) {
+      // Because a cursor cannot "underrun" the first row in a table the way it
+      // can "overrun" the last row in a table, we cannot universally apply down
+      // scrolls to other tables when a scroll reversal occurs. If the cursor
+      // for a particular table points to its first row and there are no
+      // outstanding scrolls for that table (indicating that its first row has
+      // been traversed), then we refrain from incrementing it
+      if (cursorAtHead[i] && !outstandingScrolls[i]) continue;
+
+      if (i != prevFocusedIndex && outstandingScrolls[i] && cursorInBounds(i)) {
+	tableViews[i].scrollDown(); // Should not throw an exception due to
+				    // cursorInBounds guard
+	cursorAtHead[i] = false;
+	tableViews[i].draw();
       }
-      tableViews[prevFocusedIndex].scrollDown();
-      cursorAtHead[prevFocusedIndex] = false;
-      lastTableScrolls[prevFocusedIndex] = DOWN;
-      // The below draw call will not be reached if the previously focused
-      // table's cursor is at its last element (TableView::scrollDown will throw
-      // an exception). To cover this case, remember to call TableView::draw in
-      // the exception handler
-      tableViews[prevFocusedIndex].draw();
-    } else {
-      tableViews[focusedIndex].scrollDown();
-      cursorAtHead[focusedIndex] = false;
-      lastTableScrolls[focusedIndex] = DOWN;
     }
+  }
+
+  prevScroll = DOWN;
+
+  try {
+    cursorAtHead[prevFocusedIndex] = false;
+    tableViews[prevFocusedIndex].scrollDown(); // May throw an exception, so do
+					       // last
   } catch (const std::out_of_range& e) {
     int count = 0;
     for (int i : indices) {
       if (tableViews[i].cursorIndex() == tables[i].length()) count++;
     }
     if (count == tables.size()) {
+      tableViews[prevFocusedIndex].draw();
       throw std::out_of_range("Attempting to scroll past end of view array");
     }
-    tableViews[prevFocusedIndex].draw();
+    focusedIndex = forwardFocus();
   }
 
-  // Focus on next closest table in forward direction
   if (focusedIndex != prevFocusedIndex) {
+    // Now that we have checked that there was no outstanding up-scroll for the
+    // previously focused table, we can safely set the corresponding outstanding
+    // scroll fields
+    outstandingScrolls[focusedIndex] = false;
+    outstandingScrolls[prevFocusedIndex] = true;
+
+    // Focus on next closest table in forward direction
     tableViews[prevFocusedIndex].focus = false;
     tableViews[prevFocusedIndex].draw(); // Remember to redraw after unfocusing
     tableViews[focusedIndex].focus = true;
   }
+
   tableViews[focusedIndex].draw();
 }
 
@@ -190,9 +191,9 @@ int TableViewArray::forwardFocus() {
     Table const& tableB = tables[b];
     // Ignore tables with their cursors at their tail by forcing them to the top
     // of the sort/min_element search
-    if (tableViews[a].cursorIndex() >= (tableA.length() - 1)) {
+    if (tableViews[a].cursorIndex() >= tableA.length()) {
       return false;
-    } else if (tableViews[b].cursorIndex() >= (tableB.length() - 1)) {
+    } else if (tableViews[b].cursorIndex() >= tableB.length()) {
       return true;
     } else {
       // If a particular table had last been subjected to a cross-table scroll
@@ -218,9 +219,9 @@ int TableViewArray::reverseFocus() {
   auto compare = [this](int a, int b) {
     // Ignore tables with their cursors at their head by forcing them to the
     // bottom of the sort/max_element search
-    if (cursorAtHead[a]) {
+    if (cursorAtHead[a] && !outstandingScrolls[a]) {
       return true;
-    } else if (cursorAtHead[b]) {
+    } else if (cursorAtHead[b] && !outstandingScrolls[b]) {
       return false;
     } else {
       // Recall that a table's cursor will point to the same index as cend when
@@ -242,12 +243,14 @@ int TableViewArray::reverseFocus() {
 std::chrono::year_month_day TableViewArray::forwardDate(int tableIndex) const {
   Table const& table = tables[tableIndex];
   TableView const& tableView = tableViews[tableIndex];
-  if (focusedIndex == tableIndex) {
+  bool outstandingUpScroll = outstandingScrolls[tableIndex] && prevScroll == UP;
+  if (focusedIndex == tableIndex && cursorInBounds(tableIndex)) {
     // If the table is currently focused, return the next date
     return table.getDate(table.cbegin() + tableView.cursorIndex() + 1);
-  } else if (lastTableScrolls[tableIndex] == UP) {
-    // Otherwise, if the table is unfocused (implied) AND the last scroll was in
-    // the opposite direction, return the next date
+  } else if (focusedIndex != tableIndex && outstandingUpScroll) {
+    // Otherwise, if the table is unfocused AND the last scroll was in the
+    // opposite direction AND there's an outstanding scroll for the table,
+    // return the next date
     return table.getDate(table.cbegin() + tableView.cursorIndex() + 1);
   } else {
     // Otherwise, return the date currently pointed to by the cursor
@@ -266,8 +269,7 @@ std::chrono::year_month_day TableViewArray::reverseDate(int tableIndex) const {
     // Otherwise, if the cursor is at the back (out-of-range), return the
     // previous date
     return table.getDate(table.cbegin() + tableView.cursorIndex() - 1);
-  } else if (lastTableScrolls[tableIndex] == DOWN &&
-	     tableView.cursorIndex() != 1) {
+  } else if (prevScroll == DOWN && tableView.cursorIndex() != 1) {
     // Otherwise, if the table is unfocused (implied) AND the last scroll was in
     // the opposite direction AND the cursor is not at the front, return the
     // previous date
@@ -277,3 +279,9 @@ std::chrono::year_month_day TableViewArray::reverseDate(int tableIndex) const {
     return table.getDate(table.cbegin() + tableView.cursorIndex());
   }
 };
+
+bool TableViewArray::cursorInBounds(int tableIndex) const {
+  auto cursorIndex = tableViews[tableIndex].cursorIndex();
+  auto length = tables[tableIndex].length();
+  return cursorIndex < (length - 1);
+}
