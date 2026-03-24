@@ -2,7 +2,7 @@
 
 // Pass tables by value to isolate amountAlignment calculation from changes that
 // may be made to tables outside of this class
-Formatter::Formatter(std::vector<Table> tables, toml::table const& format) :
+Formatter::Formatter(TableArray tables, toml::table const& format) :
     tables{tables} {
   locale = format["locale"].value_or("");
   // In this case we use direct-initialization (i.e., ()) instead of
@@ -26,7 +26,7 @@ Formatter::Formatter(std::vector<Table> tables, toml::table const& format) :
 }
 
 std::ostream& operator<<(std::ostream& out, Formatter const& formatter) {
-  std::vector<Table> const& tables = formatter.tables;
+  TableArray const& tables = formatter.tables;
 
   // Create vector of indices used to index both the tables and tableIndices
   // vectors

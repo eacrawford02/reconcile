@@ -23,7 +23,8 @@ public:
   Row(std::string line, Metadata metadata);
   Cell& operator[](int index);
   Cell const& operator[](int index) const;
-  bool operator<(Row const& other);
+  // TODO: make non-member function
+  bool operator<(Row const& other) const;
   int size() const;
   Iterator begin();
   Iterator end();

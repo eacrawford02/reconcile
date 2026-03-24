@@ -10,6 +10,7 @@
 
 struct Descriptor {
   enum AccountKind {DEBIT, CREDIT};
+  std::string identifier;
   std::string ledgerSource;
   AccountKind normalBalance;
   int dateColumn;

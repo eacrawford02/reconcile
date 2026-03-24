@@ -11,15 +11,16 @@
 #include "toml.hpp"
 
 #include "table.hpp"
+#include "table_array.hpp"
 #include "statement_importer.hpp"
 
 class Formatter {
 public:
-  Formatter(std::vector<Table> tables, toml::table const& format);
+  Formatter(TableArray tables, toml::table const& format);
   friend std::ostream& operator<<(std::ostream& out, Formatter const&
       formatter);
 private:
-  std::vector<Table> tables;
+  TableArray tables;
   std::string locale;
   std::string indentation;
   std::string margin;

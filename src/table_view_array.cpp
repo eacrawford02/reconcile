@@ -1,6 +1,6 @@
 #include "table_view_array.hpp"
 
-TableViewArray::TableViewArray(std::vector<Table>& tables, WINDOW* window) :
+TableViewArray::TableViewArray(TableArray& tables, WINDOW* window) :
     tables{tables} {
   // Allocate screen space for each TableView
   int height;

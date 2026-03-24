@@ -19,6 +19,8 @@ public:
   int length() const;
   int width() const;
   Row& operator[](int index);
+  Row const& operator[](int index) const;
+  Table& operator+=(Table const& table);
   Iterator insert(ConstIterator position, const Row& value);
   int columnWidth(int column) const;
   // TODO: potentially move out of Table class
@@ -34,6 +36,7 @@ public:
   Iterator end(); // Don't hold reference, may be invalidated
   ConstIterator cbegin() const; // Don't hold reference, may be invalidated
   ConstIterator cend() const; // Don't hold reference, may be invalidated
+  std::string identifier() const;
   Descriptor::AccountKind normalBalance() const;
   std::vector<int> const& displayColumns();
 private:

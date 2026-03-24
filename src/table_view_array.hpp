@@ -9,10 +9,11 @@
 
 #include "table.hpp"
 #include "table_view.hpp"
+#include "table_array.hpp"
 
 class TableViewArray {
 public:
-  TableViewArray(std::vector<Table>& tables, WINDOW* window);
+  TableViewArray(TableArray& tables, WINDOW* window);
   ~TableViewArray();
   // TODO: automatically detect and merge entries from separate accounts
   // representing either sides of the same transaction
@@ -25,7 +26,7 @@ private:
   enum ScrollDirection {UP, DOWN};
   std::vector<WINDOW*> borders;
   std::vector<WINDOW*> contents;
-  std::vector<Table>& tables;
+  TableArray& tables;
   std::vector<TableView> tableViews;
   std::vector<int> indices;
   std::vector<bool> cursorAtHead;

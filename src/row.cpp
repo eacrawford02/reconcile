@@ -23,7 +23,7 @@ Cell& Row::operator[](int index) { return cells[index]; }
 
 Cell const& Row::operator[](int index) const { return cells[index]; }
 
-bool Row::operator<(Row const& other) {
+bool Row::operator<(Row const& other) const {
   // Empty argument for casting function calls is dependent on the table already
   // having parsed every row's date string
   auto date = cells[metadata.sortColumn].as<std::chrono::year_month_day>();

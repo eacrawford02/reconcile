@@ -80,6 +80,24 @@ int Table::width() const { return rows[0].size(); }
 
 Row& Table::operator[](int index) { return rows[index]; }
 
+Row const& Table::operator[](int index) const { return rows[index]; }
+
+Table& Table::operator+=(Table const& table) {
+  if (width() != table.width()) {
+    throw std::length_error("Error: Table " + table.descriptor.ledgerSource +
+	" is either too narrow or too wide to be appended to "
+	+ descriptor.ledgerSource);
+  }
+  for (int i = 1; i < table.length(); i++) rows.push_back(table[i]);
+
+  for (int i = 0; i < table.width(); i++) {
+    if (table.columnWidth(i) > columnWidths[i]) {
+      columnWidths[i] = table.columnWidth(i);
+    }
+  }
+  return *this;
+}
+
 int Table::columnWidth(int column) const { return columnWidths[column]; }
 
 std::string Table::formatString(int column) const { return formatting[column]; }
@@ -186,6 +204,10 @@ Table::Iterator Table::end() { return rows.end(); }
 Table::ConstIterator Table::cbegin() const { return rows.cbegin(); }
 
 Table::ConstIterator Table::cend() const { return rows.cend(); }
+
+std::string Table::identifier() const {
+  return descriptor.identifier;
+}
 
 Descriptor::AccountKind Table::normalBalance() const {
   return descriptor.normalBalance;

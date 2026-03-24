@@ -1,13 +1,14 @@
 #include <iostream>
 #include <string>
-#include <vector>
 #include <filesystem>
+#include <algorithm>
 
 #include <ncurses.h>
 
 #include "toml.hpp"
 #include "statement_importer.hpp"
 #include "table.hpp"
+#include "table_array.hpp"
 #include "table_view_array.hpp"
 #include "prompt.hpp"
 #include "input.hpp"
@@ -74,12 +75,14 @@ int main(int argc, char* argv[]) {
   std::string dateFormat = config["date_format"].value_or("");
   StatementImporter importer{config};
 
-  std::vector<Table> tables;
+  TableArray tableArray;
   for (int i = 1; i < argc; i++) {
     std::string statement{argv[i]};
     Descriptor descriptor = importer.descriptor(statement);
-    tables.push_back(Table{statement, dateFormat, descriptor});
+    tableArray.push_back(Table{statement, dateFormat, descriptor});
   }
+  // Increment iterator to skip header when sorting rows in table
+  for (auto& table : tableArray) std::sort(++table.begin(), table.end());
 
   // Configure ncurses
   initscr();
@@ -111,7 +114,7 @@ int main(int argc, char* argv[]) {
   wrefresh(promptBorder);
   keypad(promptContent, TRUE);
 
-  TableViewArray tableViewArray{tables, tableContent};
+  TableViewArray tableViewArray{tableArray, tableContent};
   Prompt prompt{promptContent};
 
   std::string accountsFile = config["ledger_accounts"].value_or("");
@@ -122,7 +125,7 @@ int main(int argc, char* argv[]) {
   // Open the output file and append Ledger-formatted transactions from tables
   std::string outputFile{config["output"]["file"].value_or("")};
   std::ofstream ledgerOutput{outputFile, std::ios_base::app};
-  ledgerOutput << Formatter{tables, *config["output"]["format"].as_table()};
+  ledgerOutput << Formatter{tableArray, *config["output"]["format"].as_table()};
 
   delwin(tableContent);
   delwin(promptBorder);

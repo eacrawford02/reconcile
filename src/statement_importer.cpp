@@ -62,6 +62,7 @@ Descriptor StatementImporter::descriptor(std::string statementFile) {
 	}
 
 	struct Descriptor d = {
+	  .identifier = table[Key::identifier].value_or(""),
 	  .ledgerSource = table[Key::ledgerSource].value_or(""),
 	  .normalBalance = normalBalanceEnum,
 	  .dateColumn = table[Key::dateColumn].value_or(0),
