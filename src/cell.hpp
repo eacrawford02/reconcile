@@ -251,7 +251,7 @@ inline std::string Cell::as<std::string>(std::string format) const {
   } else if (typeID == typeid(Amount).hash_code()) {
     // Format amount
     auto contents = *reinterpret_cast<Amount const*>(buffer);
-    float amountFloatingPoint = contents / 100;
+    float amountFloatingPoint = static_cast<float>(contents) / 100;
     return std::vformat(format, std::make_format_args(amountFloatingPoint));
   } else if (typeID == typeid(std::chrono::year_month_day).hash_code()) {
     // Format date

@@ -145,10 +145,14 @@ void Table::amount(Table::Iterator position, Amount value) {
 
   // Overwrite existing cell and update column width tracking
   Cell cell{value};
+  std::string formattedCell = cell.as<std::string>(format);
   Cell& existingCell = (*position)[column];
-  updateWidth(column, existingCell.as<std::string>(format),
-      cell.as<std::string>(format));
-  existingCell = cell;
+  // For some reason, if cell.as<std::string>(format) is passed as an argument
+  // to the below function call instead of formattedCell, the Cell:as function
+  // will be called on the copy of the object cell, rather than the
+  // pre-passed-by-value object
+  updateWidth(column, existingCell.as<std::string>(format), formattedCell);
+  existingCell = formattedCell;
 
   // If the existing value is negated and there are separate columns for debits
   // & credits, then we must clear the cell in the complementary column to avoid
