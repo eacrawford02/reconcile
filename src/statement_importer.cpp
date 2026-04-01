@@ -51,6 +51,9 @@ Descriptor StatementImporter::descriptor(std::string statementFile) {
       if (line.find(identifier) != std::string::npos) {
 	toml::table table = configsMap[identifier];
 
+	// TODO: Complain if debit/credit columns are the same but debit/credit
+	// formatting strings are different
+
 	// Convert raw string value to enums representing accepted field values
 	std::string normalBalance = table[Key::normalBalance].value_or("");
 	Descriptor::AccountKind normalBalanceEnum = Descriptor::DEBIT;
